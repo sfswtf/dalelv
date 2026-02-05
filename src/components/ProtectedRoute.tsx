@@ -1,12 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useLocalAuthStore } from '../stores/localAuthStore';
+import React from 'react';
+// import { useEffect, useState } from 'react';
+// import { useNavigate } from 'react-router-dom';
+// import { useLocalAuthStore } from '../stores/localAuthStore';
 
 type Props = {
   children: React.ReactNode;
 };
 
 export const ProtectedRoute: React.FC<Props> = ({ children }) => {
+  // Temporarily disabled during development - allow direct access to /admin
+  // TODO: Re-enable authentication before production
+  return <>{children}</>;
+  
+  /* Original protected route code - re-enable for production:
   const navigate = useNavigate();
   const isAdmin = useLocalAuthStore((state) => state.isAdmin);
   const isAuthenticated = useLocalAuthStore((state) => state.isAuthenticated);
@@ -48,4 +54,5 @@ export const ProtectedRoute: React.FC<Props> = ({ children }) => {
   }
 
   return <>{children}</>;
+  */
 }; 

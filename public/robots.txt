@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://sebastiansaethre.no/sitemap.xml 
+Sitemap: https://example.com/sitemap.xml 

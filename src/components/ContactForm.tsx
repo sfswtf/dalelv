@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
 import { toast, Toaster } from 'react-hot-toast';
 
 interface ContactFormData {
@@ -23,27 +22,18 @@ export function ContactForm() {
     try {
       console.log('Submitting contact form:', formData);
       
-      // Don't send status - let database default handle it
-      // The DB might use 'unread' or enum type, so we let it default
-      const { error } = await supabase
-        .from('contact_messages')
-        .insert([{
-          name: formData.name,
-          email: formData.email,
-          message: formData.message
-          // status will use database default
-        }]);
-
-      if (error) {
-        console.error('Error submitting contact form:', error);
-        console.error('Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-        });
-        throw error;
-      }
+      // Use localStorage directly (Supabase will be set up later)
+      const existingMessages = JSON.parse(localStorage.getItem('contact_messages') || '[]');
+      const newMessage = {
+        id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        name: formData.name,
+        email: formData.email,
+        message: formData.message,
+        status: 'unread',
+        created_at: new Date().toISOString(),
+        admin_notes: null,
+      };
+      localStorage.setItem('contact_messages', JSON.stringify([...existingMessages, newMessage]));
 
       toast.success('Meldingen din er sendt! Vi tar kontakt snart.');
       setFormData({ name: '', email: '', message: '' });
@@ -108,7 +98,33 @@ export function ContactForm() {
           {isSubmitting ? 'Sender...' : 'Send Melding'}
         </button>
       </div>
-      <Toaster position="top-center" />
+      <Toaster 
+        position="top-center"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#10b981',
+            color: 'white',
+            fontSize: '18px',
+            padding: '16px 24px',
+            minWidth: '300px',
+            borderRadius: '8px',
+            fontWeight: '500',
+          },
+          success: {
+            duration: 4000,
+            style: {
+              background: '#10b981',
+              color: 'white',
+              fontSize: '18px',
+              padding: '16px 24px',
+              minWidth: '300px',
+              borderRadius: '8px',
+              fontWeight: '500',
+            },
+          },
+        }}
+      />
     </form>
   );
 }
