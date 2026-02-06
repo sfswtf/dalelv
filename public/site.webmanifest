@@ -1,7 +1,7 @@
 {
-  "name": "Site Name",
-  "short_name": "Site",
-  "description": "Website description - customize in siteConfig",
+  "name": "Dalelv Records",
+  "short_name": "Dalelv",
+  "description": "Dalelv Records",
   "icons": [
     {
       "src": "/favicon-16x16.png",

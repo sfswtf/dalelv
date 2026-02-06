@@ -13,9 +13,9 @@ const translations: Record<Language, Record<string, string>> = {
   no: {
     // Navigation
     'nav.home': 'Hjem',
-    'nav.artists': 'Artister',
+    'nav.artists': 'Artista',
     'nav.merch': 'Merch',
-    'nav.events': 'Tour/Events',
+    'nav.events': 'Tour',
     'nav.portfolio': 'Portefølje',
     'nav.blog': 'Nyheter',
     'nav.courses': 'Kurs',
@@ -265,11 +265,11 @@ const translations: Record<Language, Record<string, string>> = {
     'admin.orders': 'Bestillinger',
   },
   en: {
-    // Navigation
+    // Navigation (launch Norwegian-only: same labels as no)
     'nav.home': 'Home',
-    'nav.artists': 'Artists',
+    'nav.artists': 'Artista',
     'nav.merch': 'Merch',
-    'nav.events': 'Tour/Events',
+    'nav.events': 'Tour',
     'nav.portfolio': 'Portfolio',
     'nav.blog': 'News',
     'nav.courses': 'Courses',
@@ -383,9 +383,9 @@ const translations: Record<Language, Record<string, string>> = {
     'events.description': 'See our upcoming concerts and events.',
     'events.comingSoon': 'Events coming soon.',
     
-    'contact.title': 'Contact',
-    'contact.getInTouch': 'Get in Touch',
-    'contact.description': 'Have questions or want to collaborate? I\'d love to hear from you. Send me a message, and I\'ll respond as soon as possible.',
+    'contact.title': 'Kontakt',
+    'contact.getInTouch': 'Ta kontakt',
+    'contact.description': 'Har du spørsmål eller vil du samarbeide? Send en melding, så svarer vi så raskt vi kan.',
     
     // Onboarding
     'onboarding.title': 'AI Onboarding',

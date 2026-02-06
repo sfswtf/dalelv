@@ -24,14 +24,29 @@ const __dirname = path.dirname(__filename);
 const inputFile = path.join(__dirname, 'public', 'favicon.png');
 const outputDir = path.join(__dirname, 'public');
 
-// Check if ImageMagick is installed
-try {
-  execSync('which convert', { stdio: 'ignore' });
-} catch (error) {
+const isWindows = process.platform === 'win32';
+const magickCmd = isWindows ? 'magick' : 'convert';
+
+// Check if ImageMagick is installed (ImageMagick 7 uses "magick", older uses "convert")
+function checkImageMagick() {
+  try {
+    execSync(`${magickCmd} -version`, { stdio: 'ignore' });
+    return true;
+  } catch {
+    if (!isWindows) {
+      try {
+        execSync('convert -version', { stdio: 'ignore' });
+        return true;
+      } catch {}
+    }
+  }
+  return false;
+}
+if (!checkImageMagick()) {
   console.error('❌ ImageMagick not found. Please install it first:');
   console.error('   macOS: brew install imagemagick');
   console.error('   Linux: sudo apt-get install imagemagick');
-  console.error('   Windows: Download from https://imagemagick.org/script/download.php');
+  console.error('   Windows: winget install ImageMagick.ImageMagick');
   process.exit(1);
 }
 
@@ -52,11 +67,11 @@ const sizes = [
 sizes.forEach(({ name, size }) => {
   const outputFile = path.join(outputDir, name);
   try {
-    // Use ImageMagick to resize and maintain aspect ratio with padding if needed
-    execSync(
-      `convert "${inputFile}" -resize ${size} -background transparent -gravity center -extent ${size} "${outputFile}"`,
-      { stdio: 'inherit' }
-    );
+    // ImageMagick 7: "magick in -resize ... out"; older: "convert in -resize ... out"
+    const cmd = isWindows
+      ? `magick "${inputFile}" -resize ${size} -background transparent -gravity center -extent ${size} "${outputFile}"`
+      : `convert "${inputFile}" -resize ${size} -background transparent -gravity center -extent ${size} "${outputFile}"`;
+    execSync(cmd, { stdio: 'inherit' });
     console.log(`✅ Generated: ${name}`);
   } catch (error) {
     console.error(`❌ Failed to generate ${name}:`, error.message);

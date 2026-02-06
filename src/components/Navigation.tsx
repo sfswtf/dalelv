@@ -1,34 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Ticket } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { LanguageSelector } from './LanguageSelector';
 import { useLanguageStore } from '../stores/languageStore';
 import { useVideoStore } from '../stores/videoStore';
 import { siteConfig } from '../config/siteConfig';
 
-const EVENT_LINKS = [
-  { label: 'Bastard Bar · 10.–11. Apr', sub: 'Tromsø', url: 'https://bastard.antitickets.com/event/mag-kelly-kappa' },
-  { label: 'Ottos Finnsnes · 11. Apr', sub: 'Finnsnes', url: 'https://tikkio.com/events/61883' },
-];
-
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
-  const [ticketsOpen, setTicketsOpen] = useState(false);
-  const ticketsRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguageStore();
   const { videoEnded, setVideoEnded } = useVideoStore();
   const location = useLocation();
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (ticketsRef.current && !ticketsRef.current.contains(e.target as Node)) {
-        setTicketsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
   
   // Reset video state when navigating away from homepage
   useEffect(() => {
@@ -65,9 +47,10 @@ export function Navigation() {
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 md:h-20 lg:h-20">
-          {/* Left Navigation - Artister (closer to logo) */}
-          <div className="hidden md:flex items-center flex-1 justify-end pr-4 lg:pr-6">
+        <div className="flex items-center justify-between h-20 md:h-20 lg:h-20 relative">
+          {/* Left: spacer on mobile for logo centering; Artista link on desktop (positioned toward center like before) */}
+          <div className="w-12 h-12 flex-shrink-0 md:w-auto md:flex-1 flex items-center justify-end pr-0 md:pr-4 lg:pr-6">
+            <div className="hidden md:flex md:flex-1 md:justify-end">
             <Link
               to="/artists"
               className={`relative whitespace-nowrap transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-transparent rounded px-2 py-1 text-lg text-slate-200 ${
@@ -83,10 +66,11 @@ export function Navigation() {
               )}
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-400 scale-x-0 hover:scale-x-100 transition-transform duration-300 ease-in-out origin-left" />
             </Link>
+            </div>
           </div>
 
-          {/* Center Logo */}
-          <div className="flex-shrink-0">
+          {/* Center Logo - hidden on mobile; mobile has its own centered logo below */}
+          <div className="hidden md:flex flex-shrink-0">
             <Link 
               to="/" 
               onClick={(e) => {
@@ -109,9 +93,8 @@ export function Navigation() {
             </Link>
           </div>
 
-          {/* Right Navigation - Tour/Events, Cart, Contact, Language */}
+          {/* Right Navigation - Tour, Contact */}
           <div className="hidden md:flex items-center gap-4 lg:gap-6 text-lg text-slate-200 flex-1 justify-start pl-4 lg:pl-6">
-            {/* Tour/Events Link */}
             <Link
               to="/events"
               className={`relative whitespace-nowrap transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-transparent rounded px-2 py-1 ${
@@ -127,43 +110,10 @@ export function Navigation() {
               )}
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-400 scale-x-0 hover:scale-x-100 transition-transform duration-300 ease-in-out origin-left" />
             </Link>
-            
-            {/* Tickets / Events – dropdown to both event sites */}
-            <div className="relative" ref={ticketsRef}>
-              <button
-                type="button"
-                onClick={() => setTicketsOpen(!ticketsOpen)}
-                className="relative p-2 rounded-lg text-slate-200 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/20 transition-all duration-300 flex items-center gap-1"
-                aria-label="Kjøp billetter"
-                aria-expanded={ticketsOpen}
-              >
-                <Ticket size={24} className="drop-shadow-sm" />
-                <span className="text-sm font-medium hidden lg:inline">Billetter</span>
-              </button>
-              {ticketsOpen && (
-                <div className="absolute right-0 top-full mt-2 w-72 rounded-lg bg-neutral-900 border border-neutral-700 shadow-xl z-50 py-2">
-                  <div className="px-3 py-2 text-xs text-slate-400 uppercase tracking-wider">Kjøp billetter</div>
-                  {EVENT_LINKS.map((event) => (
-                    <a
-                      key={event.url}
-                      href={event.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => setTicketsOpen(false)}
-                      className="block px-4 py-3 text-slate-200 hover:bg-white/10 hover:text-white transition-colors"
-                    >
-                      <span className="font-medium">{event.label}</span>
-                      <span className="block text-sm text-slate-400">{event.sub}</span>
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            {/* Contact Button */}
             <Link
               to="/contact"
-              className={`rounded-lg px-6 py-3 text-lg font-semibold whitespace-nowrap transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#FF4D00] focus:ring-offset-2 focus:ring-offset-transparent ${
+              className={`rounded-lg px-4 py-2 text-sm font-medium whitespace-nowrap transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#FF4D00] focus:ring-offset-2 focus:ring-offset-transparent ${
                 isActive('/contact')
                   ? 'bg-[#FF4D00] text-white shadow-lg'
                   : 'bg-[#FF4D00] text-white hover:bg-[#e64400] hover:shadow-lg hover:scale-105 active:scale-100'
@@ -172,16 +122,10 @@ export function Navigation() {
             >
               {t('nav.contact')}
             </Link>
-
-            {/* Language Selector */}
-            <div className="pl-4 border-l border-white/10">
-              <LanguageSelector />
-            </div>
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center gap-3">
-            <LanguageSelector />
+          {/* Mobile menu button - same width as left spacer so logo stays centered */}
+          <div className="md:hidden flex items-center justify-end w-12 h-12 flex-shrink-0">
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md text-slate-200 hover:text-brand-400 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 ease-in-out"
@@ -192,25 +136,24 @@ export function Navigation() {
             </button>
           </div>
           
-          {/* Mobile Logo - centered when menu is closed */}
+          {/* Mobile: single centered logo (no duplicate); stays in center with spacer + menu button */}
           {!isOpen && (
-            <div className="md:hidden absolute left-1/2 transform -translate-x-1/2">
+            <div className="md:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex justify-center" style={{ width: 'calc(100% - 8rem)' }}>
               <Link 
                 to="/" 
                 onClick={(e) => {
                   e.preventDefault();
                   window.location.href = '/';
                 }}
-                className="flex items-center"
+                className="flex items-center min-w-0"
                 aria-label="Go to homepage"
               >
                 <img
                   src={siteConfig.logo.header || siteConfig.logo.primary}
                   alt={`${siteConfig.name} logo`}
-                  className="h-24 w-auto"
+                  className="h-14 sm:h-16 w-auto max-w-full object-contain"
                   style={{
-                    filter: 'drop-shadow(0 0 8px rgba(0, 0, 0, 0.5))',
-                    objectFit: 'contain'
+                    filter: 'drop-shadow(0 0 8px rgba(0, 0, 0, 0.5))'
                   }}
                   loading="eager"
                 />
@@ -251,22 +194,6 @@ export function Navigation() {
                 {t(key)}
               </Link>
             ))}
-            <div className="border-t border-neutral-700 my-3 pt-3">
-              <div className="px-4 py-2 text-sm text-slate-400 uppercase tracking-wider">Billetter</div>
-              {EVENT_LINKS.map((event) => (
-                <a
-                  key={event.url}
-                  href={event.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setIsOpen(false)}
-                  className="block py-3 px-4 rounded-lg text-slate-200 hover:text-brand-400 hover:bg-white/5 text-lg"
-                  role="menuitem"
-                >
-                  {event.label} · {event.sub}
-                </a>
-              ))}
-            </div>
             <Link
               to="/contact"
               onClick={() => setIsOpen(false)}

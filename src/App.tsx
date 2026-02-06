@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Menu, X, Facebook, Instagram, Mail, MapPin, Sparkles, Linkedin, Twitter } from 'lucide-react';
 import { Navigation } from './components/Navigation';
@@ -139,9 +139,6 @@ function App() {
               </div>
               <p className="text-neutral-400 text-sm">
                 &copy; {new Date().getFullYear()} {siteConfig.name}. {t('footer.rights')}
-                <Link to="/login" className="ml-4 text-neutral-500 hover:text-neutral-400 text-sm">
-                  {t('footer.admin')}
-                </Link>
               </p>
               <p className="text-neutral-400 text-sm mt-2">
                 <a href={siteConfig.url} className="hover:text-brand-400 transition-colors">
@@ -166,14 +163,14 @@ function HomePage() {
         imageUrl="/images/hero-background.jpg"
         videoUrl="/images/hero-intro.mp4"
       >
-        {/* Hero overlay: logo prominent; event CTA buttons below */}
-        <div className="relative w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-screen flex flex-col justify-start items-center pt-8 sm:pt-10 md:pt-12">
+        {/* Hero overlay: logo and buttons ~20% higher */}
+        <div className="relative w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-screen flex flex-col justify-start items-center pt-16 sm:pt-20 md:pt-24 lg:pt-28">
           <div className="text-center w-full flex flex-col items-center gap-3 sm:gap-4 md:gap-5 min-h-0">
-            {/* Logo - larger again, stays above background tour text */}
+            {/* Logo - 10% larger again */}
             <img
               src={siteConfig.logo.primary}
               alt={`${siteConfig.name} logo symbol`}
-              className="w-auto max-w-[90vw] h-[22vh] min-h-[100px] max-h-[260px] sm:h-[26vh] sm:max-h-[320px] md:h-[30vh] md:max-h-[380px] object-contain flex-shrink-0"
+              className="w-auto max-w-[90vw] h-[27.5vh] min-h-[127px] max-h-[330px] sm:h-[33vh] sm:max-h-[407px] md:h-[38.5vh] md:max-h-[484px] object-contain flex-shrink-0"
               style={{
                 filter: 'drop-shadow(0 0 16px rgba(0, 0, 0, 0.5))',
                 marginBottom: '-0.5rem'
@@ -185,7 +182,7 @@ function HomePage() {
               <img
                 src={siteConfig.logo.secondary}
                 alt={siteConfig.name}
-                className="h-[5rem] sm:h-[6rem] md:h-[7rem] w-auto max-w-[85vw] object-contain flex-shrink-0"
+                className="h-[6.35rem] sm:h-[7.6rem] md:h-[8.8rem] w-auto max-w-[85vw] object-contain flex-shrink-0"
                 style={{
                   mixBlendMode: 'normal',
                   filter: 'drop-shadow(0 0 8px rgba(0, 0, 0, 0.3))',

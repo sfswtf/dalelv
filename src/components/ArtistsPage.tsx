@@ -109,7 +109,6 @@ export function ArtistsPage() {
     return (
       <AnimatedSection>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h1 className="text-4xl font-bold mb-8 text-center">{t('artists.title')}</h1>
           <p className="text-neutral-600 text-center">{t('artists.comingSoon')}</p>
         </div>
       </AnimatedSection>
@@ -119,9 +118,6 @@ export function ArtistsPage() {
   return (
     <AnimatedSection>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-4xl font-bold mb-8 text-center">{t('artists.title')}</h1>
-        <p className="text-lg text-neutral-600 mb-12 text-center">{t('artists.description')}</p>
-        
         <div className="grid gap-8 md:grid-cols-2">
           {artists.map((artist) => (
             <Link
