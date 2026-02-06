@@ -36,25 +36,8 @@ export function ContactForm() {
       setFormData({ name: '', email: '', message: '' });
     } catch (error: any) {
       const errMsg = error?.message || String(error);
-      console.warn('Supabase contact insert failed:', error);
-      toast.error(`Ikke sendt til Supabase: ${errMsg.slice(0, 50)}${errMsg.length > 50 ? '…' : ''}`);
-      try {
-        const existingMessages = JSON.parse(localStorage.getItem('contact_messages') || '[]');
-        const newMessage = {
-          id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          name: formData.name,
-          email: formData.email,
-          message: formData.message,
-          status: 'unread',
-          created_at: new Date().toISOString(),
-          admin_notes: null,
-        };
-        localStorage.setItem('contact_messages', JSON.stringify([...existingMessages, newMessage]));
-        toast.error('Lagret bare lokalt. Meldingen kom ikke til Supabase – sjekk RLS og env vars, så redeploy.');
-        setFormData({ name: '', email: '', message: '' });
-      } catch (localError) {
-        toast.error('Beklager, noe gikk galt. Vennligst prøv igjen senere.');
-      }
+      console.error('Supabase contact insert failed:', error);
+      toast.error(`Kunne ikke sende: ${errMsg.slice(0, 80)}${errMsg.length > 80 ? '…' : ''}`);
     } finally {
       setIsSubmitting(false);
     }

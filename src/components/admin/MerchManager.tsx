@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useLanguageStore } from '../../stores/languageStore';
-import { LocalStorageService } from '../../lib/localStorage';
 import { supabase } from '../../lib/supabase';
 import { RichTextEditor } from './RichTextEditor';
 import { X, Plus } from 'lucide-react';
@@ -79,32 +78,12 @@ export function MerchManager() {
         }));
         setMerchItems(normalizedData as MerchItem[]);
       } else {
-        const localData = LocalStorageService.get<MerchItem>('merch');
-        // Ensure arrays are initialized
-        const normalizedData = localData.map((item: any) => ({
-          ...item,
-          sizes: item.sizes || [],
-          colors: item.colors || [],
-          image_urls: item.image_urls || [],
-        }));
-        setMerchItems(normalizedData.sort((a, b) => a.display_order - b.display_order || a.name.localeCompare(b.name)));
+        setMerchItems([]);
       }
     } catch (error) {
-      console.warn('Supabase fetch failed, using localStorage:', error);
-      try {
-        const data = LocalStorageService.get<MerchItem>('merch');
-        // Ensure arrays are initialized
-        const normalizedData = data.map((item: any) => ({
-          ...item,
-          sizes: item.sizes || [],
-          colors: item.colors || [],
-          image_urls: item.image_urls || [],
-        }));
-        setMerchItems(normalizedData.sort((a, b) => a.display_order - b.display_order || a.name.localeCompare(b.name)));
-      } catch (localError) {
-        console.error('Error fetching merch:', localError);
-        toast.error('Kunne ikke hente merch');
-      }
+      console.error('Supabase fetch failed:', error);
+      setMerchItems([]);
+      toast.error('Kunne ikke hente merch fra Supabase');
     } finally {
       setLoading(false);
     }
@@ -187,38 +166,6 @@ export function MerchManager() {
         toast.success('Merch opprettet!');
       }
 
-      const fullData: MerchItem = {
-        ...formData,
-        id: savedId,
-        name: supabasePayload.name,
-        description: supabasePayload.description,
-        name_nb: formData.name_nb,
-        name_en: formData.name_en,
-        description_nb: formData.description_nb,
-        description_en: formData.description_en,
-        image_urls: imageUrls,
-        sizes,
-        colors,
-        price: supabasePayload.price,
-        currency: supabasePayload.currency,
-        category: supabasePayload.category || '',
-        stock_quantity: formData.stock_quantity,
-        status: supabasePayload.status,
-        featured: supabasePayload.featured,
-        display_order: supabasePayload.display_order,
-        updated_at: now,
-        created_at: formData.created_at || now,
-      };
-      const localData = LocalStorageService.get<MerchItem>('merch');
-      const existingIndex = localData.findIndex(m => m.id === savedId);
-      if (existingIndex >= 0) {
-        const updated = [...localData];
-        updated[existingIndex] = { ...updated[existingIndex], ...fullData };
-        LocalStorageService.set('merch', updated);
-      } else {
-        LocalStorageService.set('merch', [...localData, fullData]);
-      }
-
       setEditingItem(null);
       setFormData({
         name: '',
@@ -240,67 +187,15 @@ export function MerchManager() {
       });
       fetchMerch();
     } catch (error: any) {
-      console.warn('Supabase save failed, using localStorage:', error);
-      try {
-        const merchData = {
-          ...formData,
-          image_urls: imageUrls,
-          sizes,
-          colors,
-          updated_at: now,
-          created_at: formData.created_at || now,
-        };
-        const localData = LocalStorageService.get<MerchItem>('merch');
-        if (editingItem?.id) {
-          const updated = localData.map(m =>
-            m.id === editingItem.id
-              ? { ...merchData, id: editingItem.id, created_at: m.created_at || now }
-              : m
-          );
-          LocalStorageService.set('merch', updated);
-          toast.success('Merch oppdatert (lokal lagring)');
-        } else {
-          const newItem = {
-            ...merchData,
-            id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            created_at: now,
-          };
-          LocalStorageService.set('merch', [...localData, newItem]);
-          toast.success('Merch opprettet (lokal lagring)');
-        }
-        setEditingItem(null);
-        setFormData({
-          name: '',
-          name_nb: '',
-          name_en: '',
-          description: '',
-          description_nb: '',
-          description_en: '',
-          price: 0,
-          currency: 'NOK',
-          image_urls: [],
-          category: '',
-          sizes: [],
-          colors: [],
-          stock_quantity: undefined,
-          status: 'published',
-          featured: false,
-          display_order: 0,
-        });
-        fetchMerch();
-      } catch (localError) {
-        console.error('Error saving merch:', localError);
-        toast.error('Kunne ikke lagre merch');
-      }
+      const errMsg = error?.message || String(error);
+      console.error('Supabase save failed:', error);
+      toast.error(`Kunne ikke lagre: ${errMsg.slice(0, 80)}${errMsg.length > 80 ? '…' : ''}`);
     }
   }
 
   function handleEdit(item: MerchItem) {
     setEditingItem(item);
-    // Ensure we get fresh data from localStorage to avoid stale data
-    const localData = LocalStorageService.get<MerchItem>('merch');
-    const freshItem = localData.find(m => m.id === item.id);
-    const itemToEdit = freshItem || item;
+    const itemToEdit = item;
     
     // Normalize arrays - handle both array and non-array formats
     let normalizedSizes: string[] = [];
@@ -375,10 +270,6 @@ export function MerchManager() {
     try {
       const { error } = await supabase.from('merch').delete().eq('id', id);
       if (error) throw error;
-
-      const localData = LocalStorageService.get<MerchItem>('merch');
-      LocalStorageService.set('merch', localData.filter(m => m.id !== id));
-
       toast.success('Merch slettet!');
       fetchMerch();
     } catch (error: any) {

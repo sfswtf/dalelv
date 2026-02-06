@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { LocalStorageService } from '../../lib/localStorage';
 import { supabase } from '../../lib/supabase';
 
 type Artist = {
@@ -94,22 +93,10 @@ export function EventManager() {
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        setArtists(data as Artist[]);
-      } else {
-        const localData = LocalStorageService.get<Artist>('artists');
-        const published = localData.filter(a => (a.status || 'published') === 'published');
-        setArtists(published.map(a => ({ id: a.id || `local-${Date.now()}-${Math.random()}`, name: a.name })));
-      }
+      setArtists((data || []) as Artist[]);
     } catch (error) {
-      console.warn('Supabase fetch failed, using localStorage:', error);
-      try {
-        const localData = LocalStorageService.get<Artist>('artists');
-        const published = localData.filter(a => (a.status || 'published') === 'published');
-        setArtists(published.map(a => ({ id: a.id || `local-${Date.now()}-${Math.random()}`, name: a.name })));
-      } catch (localError) {
-        console.error('Error fetching artists:', localError);
-      }
+      console.error('Supabase fetch artists failed:', error);
+      setArtists([]);
     }
   }
 
@@ -131,55 +118,21 @@ export function EventManager() {
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        const eventsWithArtists = data.map(event => ({
-          ...event,
-          artists: (event.event_artists || []).map((ea: any) => ({
-            id: ea.id,
-            artist_id: ea.artist_id,
-            artist_name: ea.artists?.name || '',
-            is_headliner: ea.is_headliner,
-            performance_order: ea.performance_order,
-          })),
-        }));
-        setEvents(eventsWithArtists as Event[]);
-      } else {
-        const localData = LocalStorageService.get<Event>('events');
-        // Get all artists to map IDs to names
-        const allArtists = LocalStorageService.get<Artist>('artists');
-        const artistMap = new Map(allArtists.map(a => [a.id || '', a.name]));
-        
-        // Ensure artists array exists and map artist names
-        const eventsWithArtists = localData.map(event => ({
-          ...event,
-          artists: (event.artists || []).map(ea => ({
-            ...ea,
-            artist_name: ea.artist_name || artistMap.get(ea.artist_id) || '',
-          })),
-        }));
-        setEvents(eventsWithArtists.sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime()));
-      }
+      const eventsWithArtists = (data || []).map((event: any) => ({
+        ...event,
+        artists: (event.event_artists || []).map((ea: any) => ({
+          id: ea.id,
+          artist_id: ea.artist_id,
+          artist_name: ea.artists?.name || '',
+          is_headliner: ea.is_headliner,
+          performance_order: ea.performance_order,
+        })),
+      }));
+      setEvents(eventsWithArtists as Event[]);
     } catch (error) {
-      console.warn('Supabase fetch failed, using localStorage:', error);
-      try {
-        const data = LocalStorageService.get<Event>('events');
-        // Get all artists to map IDs to names
-        const allArtists = LocalStorageService.get<Artist>('artists');
-        const artistMap = new Map(allArtists.map(a => [a.id || '', a.name]));
-        
-        // Ensure artists array exists and map artist names
-        const eventsWithArtists = data.map(event => ({
-          ...event,
-          artists: (event.artists || []).map(ea => ({
-            ...ea,
-            artist_name: ea.artist_name || artistMap.get(ea.artist_id) || '',
-          })),
-        }));
-        setEvents(eventsWithArtists.sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime()));
-      } catch (localError) {
-        console.error('Error fetching events:', localError);
-        toast.error('Kunne ikke hente arrangementer');
-      }
+      console.error('Supabase fetch events failed:', error);
+      setEvents([]);
+      toast.error('Kunne ikke hente arrangementer fra Supabase');
     } finally {
       setLoading(false);
     }
@@ -232,30 +185,6 @@ export function EventManager() {
         if (artistError) throw artistError;
       }
 
-      // Also save to localStorage as backup
-      try {
-        const eventData = {
-          ...formData,
-          id: eventId,
-          artists: selectedArtists,
-        } as Event;
-
-        if (editingEvent?.id) {
-          LocalStorageService.update('events', editingEvent.id, eventData);
-        } else {
-          // Check if it already exists in localStorage
-          const existing = LocalStorageService.get<Event>('events').find(e => e.id === eventId);
-          if (existing) {
-            LocalStorageService.update('events', eventId, eventData);
-          } else {
-            LocalStorageService.add('events', eventData);
-          }
-        }
-      } catch (localError) {
-        console.warn('Failed to save to localStorage backup:', localError);
-        // Don't throw - Supabase save succeeded, localStorage is just backup
-      }
-
       setEditingEvent(null);
       setSelectedArtists([]);
       setFormData({
@@ -285,54 +214,9 @@ export function EventManager() {
       });
       fetchEvents();
     } catch (error: any) {
-      console.warn('Supabase save failed, using localStorage:', error);
-      try {
-        // Include artists in the event data for localStorage
-        const eventData = {
-          ...formData,
-          artists: selectedArtists,
-        } as Event;
-
-        if (editingEvent?.id) {
-          LocalStorageService.update('events', editingEvent.id, eventData);
-          toast.success('Arrangement oppdatert (lokal lagring)');
-        } else {
-          // Generate a temporary ID for new events in localStorage
-          const newEvent = {
-            ...eventData,
-            id: `local-${Date.now()}`,
-          };
-          LocalStorageService.add('events', newEvent);
-          toast.success('Arrangement opprettet (lokal lagring)');
-        }
-        setEditingEvent(null);
-        setSelectedArtists([]);
-        setFormData({
-          title: '',
-          description: '',
-          event_date: '',
-          location: '',
-          status: 'draft',
-          image_url: '',
-          ticket_price: null,
-          tickets_url: '',
-          venue_name: '',
-          venue_address: '',
-          venue_city: '',
-          venue_country: 'Norway',
-          tour_name: '',
-          event_type: 'concert',
-          capacity: null,
-          doors_open: '',
-          support_acts: [],
-          promoter: '',
-          production_notes: '',
-        });
-        fetchEvents();
-      } catch (localError) {
-        console.error('Error saving event:', localError);
-        toast.error('Kunne ikke lagre arrangement');
-      }
+      const errMsg = error?.message || String(error);
+      console.error('Supabase save failed:', error);
+      toast.error(`Kunne ikke lagre: ${errMsg.slice(0, 80)}${errMsg.length > 80 ? '…' : ''}`);
     }
   }
 
@@ -348,15 +232,8 @@ export function EventManager() {
       toast.success('Arrangement slettet');
       fetchEvents();
     } catch (error: any) {
-      console.warn('Supabase delete failed, using localStorage:', error);
-      try {
-        LocalStorageService.delete('events', id);
-        toast.success('Arrangement slettet (lokal lagring)');
-        fetchEvents();
-      } catch (localError) {
-        console.error('Error deleting event:', localError);
-        toast.error('Kunne ikke slette arrangement');
-      }
+      console.error('Supabase delete failed:', error);
+      toast.error('Kunne ikke slette arrangement');
     }
   }
 
@@ -370,29 +247,13 @@ export function EventManager() {
       
       if (error) throw error;
       
-      // Also update in localStorage as backup
-      try {
-        LocalStorageService.update('events', id, { status: newStatus });
-      } catch (localError) {
-        console.warn('Failed to update localStorage:', localError);
-      }
-      
       setEvents(events.map(event => 
         event.id === id ? { ...event, status: newStatus } : event
       ));
       toast.success('Status oppdatert');
     } catch (error) {
       console.error('Error updating event status:', error);
-      // Fallback to localStorage only
-      try {
-        LocalStorageService.update('events', id, { status: newStatus });
-        setEvents(events.map(event => 
-          event.id === id ? { ...event, status: newStatus } : event
-        ));
-        toast.success('Status oppdatert (lokal lagring)');
-      } catch (localError) {
-        toast.error('Kunne ikke oppdatere status');
-      }
+      toast.error('Kunne ikke oppdatere status');
     }
   }
 

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useLanguageStore } from '../../stores/languageStore';
-import { LocalStorageService } from '../../lib/localStorage';
 import { supabase } from '../../lib/supabase';
 import { RichTextEditor } from './RichTextEditor';
 import { X, Plus } from 'lucide-react';
@@ -91,52 +90,12 @@ export function ArtistManager() {
         }));
         setArtists(normalizedData as Artist[]);
       } else {
-        const localData = LocalStorageService.get<Artist>('artists');
-        const normalizedData = localData.map((item: any) => ({
-          ...item,
-          name: item.name || '',
-          name_nb: item.name_nb ?? item.name ?? '',
-          name_en: item.name_en ?? '',
-          bio: item.bio || '',
-          bio_nb: item.bio_nb ?? item.bio ?? '',
-          bio_en: item.bio_en ?? '',
-          image_url: item.image_url || '',
-          spotify_url: item.spotify_url || '',
-          spotify_embed_url: item.spotify_embed_url || '',
-          website_url: item.website_url || '',
-          instagram_url: item.instagram_url || '',
-          facebook_url: item.facebook_url || '',
-          youtube_url: item.youtube_url || '',
-          other_links: Array.isArray(item.other_links) ? item.other_links : [],
-        }));
-        setArtists(normalizedData.sort((a, b) => a.display_order - b.display_order || (a.name || '').localeCompare(b.name || '')));
+        setArtists([]);
       }
     } catch (error) {
-      console.warn('Supabase fetch failed, using localStorage:', error);
-      try {
-        const data = LocalStorageService.get<Artist>('artists');
-        const normalizedData = data.map((item: any) => ({
-          ...item,
-          name: item.name || '',
-          name_nb: item.name_nb ?? item.name ?? '',
-          name_en: item.name_en ?? '',
-          bio: item.bio || '',
-          bio_nb: item.bio_nb ?? item.bio ?? '',
-          bio_en: item.bio_en ?? '',
-          image_url: item.image_url || '',
-          spotify_url: item.spotify_url || '',
-          spotify_embed_url: item.spotify_embed_url || '',
-          website_url: item.website_url || '',
-          instagram_url: item.instagram_url || '',
-          facebook_url: item.facebook_url || '',
-          youtube_url: item.youtube_url || '',
-          other_links: Array.isArray(item.other_links) ? item.other_links : [],
-        }));
-        setArtists(normalizedData.sort((a, b) => a.display_order - b.display_order || (a.name || '').localeCompare(b.name || '')));
-      } catch (localError) {
-        console.error('Error fetching artists:', localError);
-        toast.error('Kunne ikke hente artister');
-      }
+      console.error('Supabase fetch failed:', error);
+      setArtists([]);
+      toast.error('Kunne ikke hente artister fra Supabase');
     } finally {
       setLoading(false);
     }
@@ -203,30 +162,6 @@ export function ArtistManager() {
         toast.success('Artist opprettet!');
       }
 
-      // Sync to localStorage as backup/cache
-      const fullData = {
-        ...formData,
-        id: savedId,
-        name: supabasePayload.name,
-        bio: supabasePayload.bio,
-        name_nb: formData.name_nb,
-        name_en: formData.name_en,
-        bio_nb: formData.bio_nb,
-        bio_en: formData.bio_en,
-        other_links: otherLinks,
-        updated_at: now,
-        created_at: formData.created_at || now,
-      };
-      const localData = LocalStorageService.get<Artist>('artists');
-      const existingIndex = localData.findIndex(a => a.id === savedId);
-      if (existingIndex >= 0) {
-        const updated = [...localData];
-        updated[existingIndex] = { ...updated[existingIndex], ...fullData };
-        LocalStorageService.set('artists', updated);
-      } else {
-        LocalStorageService.set('artists', [...localData, fullData]);
-      }
-
       setEditingArtist(null);
       setFormData({
         name: '',
@@ -250,58 +185,8 @@ export function ArtistManager() {
       fetchArtists();
     } catch (error: any) {
       const errMsg = error?.message || String(error);
-      console.warn('Supabase save failed, using localStorage:', error);
-      toast.error(`Supabase feilet: ${errMsg.slice(0, 60)}${errMsg.length > 60 ? '…' : ''}`);
-      try {
-        const artistData = {
-          ...formData,
-          other_links: otherLinks,
-          updated_at: now,
-          created_at: formData.created_at || now,
-        };
-        const localData = LocalStorageService.get<Artist>('artists');
-        if (editingArtist?.id) {
-          const updated = localData.map(a =>
-            a.id === editingArtist.id
-              ? { ...artistData, id: editingArtist.id, created_at: a.created_at || now }
-              : a
-          );
-          LocalStorageService.set('artists', updated);
-          toast.error('Lagret bare lokalt. Kom ikke til Supabase – kjør FIX_ANON_POLICIES_ONLY.sql og sjekk env vars.');
-        } else {
-          const newArtist = {
-            ...artistData,
-            id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            created_at: now,
-          };
-          LocalStorageService.set('artists', [...localData, newArtist]);
-          toast.error('Lagret bare lokalt. Kom ikke til Supabase – kjør FIX_ANON_POLICIES_ONLY.sql og sjekk env vars.');
-        }
-        setEditingArtist(null);
-        setFormData({
-          name: '',
-          name_nb: '',
-          name_en: '',
-          bio: '',
-          bio_nb: '',
-          bio_en: '',
-          image_url: '',
-          spotify_url: '',
-          spotify_embed_url: '',
-          website_url: '',
-          instagram_url: '',
-          facebook_url: '',
-          youtube_url: '',
-          other_links: [],
-          status: 'published',
-          featured: false,
-          display_order: 0,
-        });
-        fetchArtists();
-      } catch (localError) {
-        console.error('Error saving artist:', localError);
-        toast.error('Kunne ikke lagre artist');
-      }
+      console.error('Supabase save failed:', error);
+      toast.error(`Kunne ikke lagre: ${errMsg.slice(0, 80)}${errMsg.length > 80 ? '…' : ''}`);
     }
   }
 
@@ -356,10 +241,6 @@ export function ArtistManager() {
     try {
       const { error } = await supabase.from('artists').delete().eq('id', id);
       if (error) throw error;
-
-      const localData = LocalStorageService.get<Artist>('artists');
-      LocalStorageService.set('artists', localData.filter(a => a.id !== id));
-
       toast.success('Artist slettet!');
       fetchArtists();
     } catch (error: any) {

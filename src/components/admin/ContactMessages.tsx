@@ -32,48 +32,25 @@ export function ContactMessages() {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        const mapped: ContactMessage[] = data.map((row: any) => ({
-          id: row.id,
-          name: row.name || '',
-          email: row.email || '',
-          message: row.message || '',
-          created_at: row.created_at || new Date().toISOString(),
-          admin_notes: row.admin_notes ?? null,
-          status: (row.status as MessageStatus) || 'unread',
-        }));
-        const notesState: { [key: string]: string } = {};
-        mapped.forEach(m => { notesState[m.id] = m.admin_notes || ''; });
-        setEditingNotes(notesState);
-        setMessages(mapped);
-        setLoading(false);
-        return;
-      }
-
-      const localData = JSON.parse(localStorage.getItem('contact_messages') || '[]');
-      if (localData?.length > 0) {
-        const mapped: ContactMessage[] = localData.map((msg: any) => ({
-          id: msg.id?.toString() || `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          name: msg.name || '',
-          email: msg.email || '',
-          message: msg.message || '',
-          created_at: msg.created_at || new Date().toISOString(),
-          admin_notes: msg.admin_notes || null,
-          status: (msg.status as MessageStatus) || 'unread',
-        }));
-        const sorted = mapped.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        const notesState: { [key: string]: string } = {};
-        sorted.forEach(m => { notesState[m.id] = m.admin_notes || ''; });
-        setEditingNotes(notesState);
-        setMessages(sorted);
-      } else {
-        setMessages([]);
-        setEditingNotes({});
-      }
+      if (error) throw error;
+      const mapped: ContactMessage[] = (data || []).map((row: any) => ({
+        id: row.id,
+        name: row.name || '',
+        email: row.email || '',
+        message: row.message || '',
+        created_at: row.created_at || new Date().toISOString(),
+        admin_notes: row.admin_notes ?? null,
+        status: (row.status as MessageStatus) || 'unread',
+      }));
+      const notesState: { [key: string]: string } = {};
+      mapped.forEach(m => { notesState[m.id] = m.admin_notes || ''; });
+      setEditingNotes(notesState);
+      setMessages(mapped);
     } catch (err) {
-      console.warn('Fetch messages failed:', err);
+      console.error('Fetch messages failed:', err);
       setMessages([]);
       setEditingNotes({});
+      toast.error('Kunne ikke hente meldinger fra Supabase');
     } finally {
       setLoading(false);
     }
@@ -85,12 +62,8 @@ export function ContactMessages() {
       if (error) throw error;
       toast.success('Status oppdatert');
       fetchMessages();
-    } catch (err) {
-      const localData = JSON.parse(localStorage.getItem('contact_messages') || '[]');
-      const updated = localData.map((msg: any) => (msg.id === id ? { ...msg, status } : msg));
-      localStorage.setItem('contact_messages', JSON.stringify(updated));
-      toast.success('Status oppdatert');
-      fetchMessages();
+    } catch (err: any) {
+      toast.error(err?.message || 'Kunne ikke oppdatere status');
     }
   };
 
@@ -103,14 +76,8 @@ export function ContactMessages() {
       if (error) throw error;
       toast.success('Notater oppdatert');
       fetchMessages();
-    } catch (err) {
-      const localData = JSON.parse(localStorage.getItem('contact_messages') || '[]');
-      const updated = localData.map((msg: any) =>
-        msg.id === id ? { ...msg, admin_notes: editingNotes[id] || null } : msg
-      );
-      localStorage.setItem('contact_messages', JSON.stringify(updated));
-      toast.success('Notater oppdatert');
-      fetchMessages();
+    } catch (err: any) {
+      toast.error(err?.message || 'Kunne ikke oppdatere notater');
     }
   };
 
@@ -127,12 +94,8 @@ export function ContactMessages() {
       if (error) throw error;
       toast.success('Melding slettet');
       fetchMessages();
-    } catch (err) {
-      const localData = JSON.parse(localStorage.getItem('contact_messages') || '[]');
-      const filtered = localData.filter((msg: any) => msg.id !== id);
-      localStorage.setItem('contact_messages', JSON.stringify(filtered));
-      toast.success('Melding slettet');
-      fetchMessages();
+    } catch (err: any) {
+      toast.error(err?.message || 'Kunne ikke slette melding');
     }
   };
 
