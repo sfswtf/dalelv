@@ -166,57 +166,74 @@ function HomePage() {
         imageUrl="/images/hero-background.jpg"
         videoUrl="/images/hero-intro.mp4"
       >
-        <div className="relative w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-screen flex flex-col justify-center items-center">
-          <div className="text-center w-full flex flex-col items-center gap-4 md:gap-6">
-            {/* Logo symbol only - increased by 200% (3x size) + 50% more */}
+        {/* Hero overlay: logo prominent; event CTA buttons below */}
+        <div className="relative w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-screen flex flex-col justify-start items-center pt-8 sm:pt-10 md:pt-12">
+          <div className="text-center w-full flex flex-col items-center gap-3 sm:gap-4 md:gap-5 min-h-0">
+            {/* Logo - larger again, stays above background tour text */}
             <img
               src={siteConfig.logo.primary}
               alt={`${siteConfig.name} logo symbol`}
-              className="h-[504px] sm:h-[576px] md:h-[720px] lg:h-[792px]"
+              className="w-auto max-w-[90vw] h-[22vh] min-h-[100px] max-h-[260px] sm:h-[26vh] sm:max-h-[320px] md:h-[30vh] md:max-h-[380px] object-contain flex-shrink-0"
               style={{
                 filter: 'drop-shadow(0 0 16px rgba(0, 0, 0, 0.5))',
-                maxWidth: '90vw',
-                marginBottom: '-1.16rem'
+                marginBottom: '-0.5rem'
               }}
               loading="eager"
             />
             
-            {/* Name from logo.png image - text part only, positioned right below logo - increased by 200% (3x size) */}
             {siteConfig.logo.secondary && (
               <img
                 src={siteConfig.logo.secondary}
                 alt={siteConfig.name}
-                className="mb-2 md:mb-4 h-[9.75rem] sm:h-[11.7rem] md:h-[13.65rem] lg:h-[15.6rem] w-auto"
+                className="h-[5rem] sm:h-[6rem] md:h-[7rem] w-auto max-w-[85vw] object-contain flex-shrink-0"
                 style={{
                   mixBlendMode: 'normal',
                   filter: 'drop-shadow(0 0 8px rgba(0, 0, 0, 0.3))',
-                  marginTop: '-0.96rem'
+                  marginTop: '-0.5rem'
                 }}
                 loading="eager"
                 onError={(e) => {
-                  // If logo.png doesn't exist, hide it
                   e.currentTarget.style.display = 'none';
                 }}
               />
             )}
             
-            <div className="mt-4 md:mt-6 flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 w-full max-w-lg px-4">
-              <Link to="/artists" className="w-full sm:w-auto">
-                <AnimatedButton 
-                  variant="primary" 
-                  className="w-full sm:w-auto rounded-lg px-12 md:px-16 py-5 md:py-6 text-lg md:text-xl font-semibold bg-[#FF4D00] text-white hover:bg-[#e64400] active:bg-[#cc3a00] transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-100"
+            {/* Event tickets – two CTAs with location/date on hover */}
+            <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full max-w-2xl px-2 flex-shrink-0">
+              <a
+                href="https://bastard.antitickets.com/event/mag-kelly-kappa"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Tromsø, Bastard Bar · 10.–11. April 2026"
+                className="w-full sm:w-auto group relative"
+              >
+                <AnimatedButton
+                  variant="primary"
+                  className="w-full sm:w-auto rounded-lg px-10 md:px-14 py-4 md:py-5 text-base md:text-lg font-semibold bg-[#FF4D00] text-white hover:bg-[#e64400] active:bg-[#cc3a00] transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-100"
                 >
-                  Artister
+                  MAGG & KELLY KAPPA
                 </AnimatedButton>
-              </Link>
-              <Link to="/merch" className="w-full sm:w-auto">
-                <AnimatedButton 
-                  variant="secondary" 
-                  className="w-full sm:w-auto rounded-lg px-12 md:px-16 py-5 md:py-6 text-lg md:text-xl font-semibold bg-[#FF4D00] text-white hover:bg-[#e64400] active:bg-[#cc3a00] transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-100"
+                <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-1.5 text-sm text-white bg-black/80 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                  Tromsø · Bastard Bar · 10.–11. April 2026
+                </span>
+              </a>
+              <a
+                href="https://tikkio.com/events/61883"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Finnsnes, Ottos · 11. April 2026"
+                className="w-full sm:w-auto group relative"
+              >
+                <AnimatedButton
+                  variant="secondary"
+                  className="w-full sm:w-auto rounded-lg px-10 md:px-14 py-4 md:py-5 text-base md:text-lg font-semibold bg-[#FF4D00] text-white hover:bg-[#e64400] active:bg-[#cc3a00] transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-100"
                 >
-                  Merch
+                  KNØRVA 5 Year Tour
                 </AnimatedButton>
-              </Link>
+                <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-1.5 text-sm text-white bg-black/80 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                  Finnsnes · Ottos · 11. April 2026
+                </span>
+              </a>
             </div>
           </div>
         </div>

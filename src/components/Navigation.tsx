@@ -1,20 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ShoppingCart } from 'lucide-react';
+import { Menu, X, Ticket } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { LanguageSelector } from './LanguageSelector';
 import { useLanguageStore } from '../stores/languageStore';
 import { useVideoStore } from '../stores/videoStore';
-import { useCartStore } from '../stores/cartStore';
 import { siteConfig } from '../config/siteConfig';
+
+const EVENT_LINKS = [
+  { label: 'Bastard Bar · 10.–11. Apr', sub: 'Tromsø', url: 'https://bastard.antitickets.com/event/mag-kelly-kappa' },
+  { label: 'Ottos Finnsnes · 11. Apr', sub: 'Finnsnes', url: 'https://tikkio.com/events/61883' },
+];
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
+  const [ticketsOpen, setTicketsOpen] = useState(false);
+  const ticketsRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguageStore();
   const { videoEnded, setVideoEnded } = useVideoStore();
-  const { getItemCount } = useCartStore();
   const location = useLocation();
-  const cartCount = getItemCount();
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ticketsRef.current && !ticketsRef.current.contains(e.target as Node)) {
+        setTicketsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   
   // Reset video state when navigating away from homepage
   useEffect(() => {
@@ -114,19 +128,37 @@ export function Navigation() {
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-400 scale-x-0 hover:scale-x-100 transition-transform duration-300 ease-in-out origin-left" />
             </Link>
             
-            {/* Cart Icon - More visible */}
-            <Link
-              to="/checkout"
-              className="relative p-2 rounded-lg text-slate-200 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/20 transition-all duration-300"
-              aria-label="Handlekurv"
-            >
-              <ShoppingCart size={24} className="drop-shadow-sm" />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[#FF4D00] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-lg">
-                  {cartCount}
-                </span>
+            {/* Tickets / Events – dropdown to both event sites */}
+            <div className="relative" ref={ticketsRef}>
+              <button
+                type="button"
+                onClick={() => setTicketsOpen(!ticketsOpen)}
+                className="relative p-2 rounded-lg text-slate-200 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/20 transition-all duration-300 flex items-center gap-1"
+                aria-label="Kjøp billetter"
+                aria-expanded={ticketsOpen}
+              >
+                <Ticket size={24} className="drop-shadow-sm" />
+                <span className="text-sm font-medium hidden lg:inline">Billetter</span>
+              </button>
+              {ticketsOpen && (
+                <div className="absolute right-0 top-full mt-2 w-72 rounded-lg bg-neutral-900 border border-neutral-700 shadow-xl z-50 py-2">
+                  <div className="px-3 py-2 text-xs text-slate-400 uppercase tracking-wider">Kjøp billetter</div>
+                  {EVENT_LINKS.map((event) => (
+                    <a
+                      key={event.url}
+                      href={event.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setTicketsOpen(false)}
+                      className="block px-4 py-3 text-slate-200 hover:bg-white/10 hover:text-white transition-colors"
+                    >
+                      <span className="font-medium">{event.label}</span>
+                      <span className="block text-sm text-slate-400">{event.sub}</span>
+                    </a>
+                  ))}
+                </div>
               )}
-            </Link>
+            </div>
 
             {/* Contact Button */}
             <Link
@@ -219,6 +251,22 @@ export function Navigation() {
                 {t(key)}
               </Link>
             ))}
+            <div className="border-t border-neutral-700 my-3 pt-3">
+              <div className="px-4 py-2 text-sm text-slate-400 uppercase tracking-wider">Billetter</div>
+              {EVENT_LINKS.map((event) => (
+                <a
+                  key={event.url}
+                  href={event.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setIsOpen(false)}
+                  className="block py-3 px-4 rounded-lg text-slate-200 hover:text-brand-400 hover:bg-white/5 text-lg"
+                  role="menuitem"
+                >
+                  {event.label} · {event.sub}
+                </a>
+              ))}
+            </div>
             <Link
               to="/contact"
               onClick={() => setIsOpen(false)}

@@ -153,7 +153,7 @@ export const ParallaxHero: React.FC<ParallaxHeroProps> = ({ children, imageUrl, 
             position: videoUrl && !videoEnded && !videoError ? 'absolute' : 'relative'
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/60 to-black/85"></div>
+        {/* No dark overlay - background at full opacity */}
       </div>
       {/* Content - only visible when conditions are met, no flashing */}
       <motion.div 
