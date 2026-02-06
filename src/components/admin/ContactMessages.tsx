@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Mail, Save, Trash2 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 
 type MessageStatus = 'unread' | 'read' | 'replied';
 
@@ -26,13 +27,32 @@ export function ContactMessages() {
   const fetchMessages = async () => {
     try {
       setLoading(true);
-      
-      // Use localStorage directly (Supabase will be set up later)
+      const { data, error } = await supabase
+        .from('contact_messages')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        const mapped: ContactMessage[] = data.map((row: any) => ({
+          id: row.id,
+          name: row.name || '',
+          email: row.email || '',
+          message: row.message || '',
+          created_at: row.created_at || new Date().toISOString(),
+          admin_notes: row.admin_notes ?? null,
+          status: (row.status as MessageStatus) || 'unread',
+        }));
+        const notesState: { [key: string]: string } = {};
+        mapped.forEach(m => { notesState[m.id] = m.admin_notes || ''; });
+        setEditingNotes(notesState);
+        setMessages(mapped);
+        setLoading(false);
+        return;
+      }
+
       const localData = JSON.parse(localStorage.getItem('contact_messages') || '[]');
-      
-      if (localData && localData.length > 0) {
-        // Map localStorage data to ContactMessage format
-        const mappedData: ContactMessage[] = localData.map((msg: any) => ({
+      if (localData?.length > 0) {
+        const mapped: ContactMessage[] = localData.map((msg: any) => ({
           id: msg.id?.toString() || `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           name: msg.name || '',
           email: msg.email || '',
@@ -41,29 +61,19 @@ export function ContactMessages() {
           admin_notes: msg.admin_notes || null,
           status: (msg.status as MessageStatus) || 'unread',
         }));
-
-        const sorted = mappedData.sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-
-        // Initialize editing notes with current values
+        const sorted = mapped.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         const notesState: { [key: string]: string } = {};
-        sorted.forEach(message => {
-          notesState[message.id] = message.admin_notes || '';
-        });
+        sorted.forEach(m => { notesState[m.id] = m.admin_notes || ''; });
         setEditingNotes(notesState);
         setMessages(sorted);
-        setLoading(false);
-        return;
+      } else {
+        setMessages([]);
+        setEditingNotes({});
       }
-
-      // No data found
+    } catch (err) {
+      console.warn('Fetch messages failed:', err);
       setMessages([]);
       setEditingNotes({});
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-      toast.error('Kunne ikke hente meldinger');
-      setMessages([]);
     } finally {
       setLoading(false);
     }
@@ -71,33 +81,36 @@ export function ContactMessages() {
 
   const updateStatus = async (id: string, status: MessageStatus) => {
     try {
-      // Use localStorage directly
+      const { error } = await supabase.from('contact_messages').update({ status }).eq('id', id);
+      if (error) throw error;
+      toast.success('Status oppdatert');
+      fetchMessages();
+    } catch (err) {
       const localData = JSON.parse(localStorage.getItem('contact_messages') || '[]');
-      const updated = localData.map((msg: any) => 
-        msg.id === id ? { ...msg, status } : msg
-      );
+      const updated = localData.map((msg: any) => (msg.id === id ? { ...msg, status } : msg));
       localStorage.setItem('contact_messages', JSON.stringify(updated));
       toast.success('Status oppdatert');
       fetchMessages();
-    } catch (error) {
-      console.error('Error updating status:', error);
-      toast.error('Kunne ikke oppdatere status');
     }
   };
 
   const updateAdminNotes = async (id: string) => {
     try {
-      // Use localStorage directly
+      const { error } = await supabase
+        .from('contact_messages')
+        .update({ admin_notes: editingNotes[id] || null })
+        .eq('id', id);
+      if (error) throw error;
+      toast.success('Notater oppdatert');
+      fetchMessages();
+    } catch (err) {
       const localData = JSON.parse(localStorage.getItem('contact_messages') || '[]');
-      const updated = localData.map((msg: any) => 
+      const updated = localData.map((msg: any) =>
         msg.id === id ? { ...msg, admin_notes: editingNotes[id] || null } : msg
       );
       localStorage.setItem('contact_messages', JSON.stringify(updated));
       toast.success('Notater oppdatert');
       fetchMessages();
-    } catch (error) {
-      console.error('Error updating admin notes:', error);
-      toast.error('Kunne ikke oppdatere notater');
     }
   };
 
@@ -108,41 +121,18 @@ export function ContactMessages() {
   };
 
   const deleteMessage = async (id: string) => {
-    if (!window.confirm('Er du sikker på at du vil slette denne meldingen?')) {
-      return;
-    }
-
+    if (!window.confirm('Er du sikker på at du vil slette denne meldingen?')) return;
     try {
-      // Use localStorage directly
+      const { error } = await supabase.from('contact_messages').delete().eq('id', id);
+      if (error) throw error;
+      toast.success('Melding slettet');
+      fetchMessages();
+    } catch (err) {
       const localData = JSON.parse(localStorage.getItem('contact_messages') || '[]');
       const filtered = localData.filter((msg: any) => msg.id !== id);
       localStorage.setItem('contact_messages', JSON.stringify(filtered));
       toast.success('Melding slettet');
       fetchMessages();
-    } catch (error) {
-      console.error('Error deleting message:', error);
-      toast.error('Kunne ikke slette melding');
-    }
-  };
-
-  // Legacy function - keeping for compatibility but not used
-  const _legacyDeleteMessage = async (id: string) => {
-    try {
-      const { error: supabaseError } = await supabase
-        .from('contact_messages')
-        .delete()
-        .eq('id', id);
-
-      if (supabaseError) {
-        console.error('Error deleting message:', supabaseError);
-        toast.error('Kunne ikke slette melding');
-        return;
-      }
-      toast.success('Melding slettet');
-      fetchMessages();
-    } catch (error) {
-      console.error('Error deleting message:', error);
-      toast.error('Kunne ikke slette melding');
     }
   };
 

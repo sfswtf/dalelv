@@ -145,36 +145,78 @@ export function MerchManager() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const imageUrls = Array.isArray(formData.image_urls) ? formData.image_urls.filter(url => url && url.trim()) : [];
+    const sizes = Array.isArray(formData.sizes) ? formData.sizes.filter(size => size && size.trim()) : [];
+    const colors = Array.isArray(formData.colors) ? formData.colors.filter(color => color && color.trim()) : [];
+    const now = new Date().toISOString();
+    const supabasePayload = {
+      name: formData.name_nb || formData.name || '',
+      description: formData.description_nb || formData.description || '',
+      price: Number(formData.price) || 0,
+      currency: formData.currency || 'NOK',
+      image_urls: imageUrls,
+      category: formData.category || null,
+      sizes: sizes.length ? sizes : null,
+      colors: colors.length ? colors : null,
+      stock_quantity: formData.stock_quantity ?? null,
+      status: formData.status || 'published',
+      featured: formData.featured ?? false,
+      display_order: formData.display_order ?? 0,
+      updated_at: now,
+    };
+
     try {
-      // Ensure arrays are properly formatted before saving
-      const merchData = {
-        ...formData,
-        image_urls: Array.isArray(formData.image_urls) ? formData.image_urls.filter(url => url && url.trim()) : [],
-        sizes: Array.isArray(formData.sizes) ? formData.sizes.filter(size => size && size.trim()) : [],
-        colors: Array.isArray(formData.colors) ? formData.colors.filter(color => color && color.trim()) : [],
-        updated_at: new Date().toISOString(),
-        created_at: formData.created_at || new Date().toISOString(),
-      };
-
-      // Use localStorage directly (Supabase will be set up later)
-      const localData = LocalStorageService.get<MerchItem>('merch');
-
+      let savedId: string;
       if (editingItem?.id) {
-        const updated = localData.map(m => 
-          m.id === editingItem.id 
-            ? { ...merchData, id: editingItem.id, created_at: m.created_at || new Date().toISOString() } 
-            : m
-        );
-        LocalStorageService.set('merch', updated);
+        const { error } = await supabase
+          .from('merch')
+          .update(supabasePayload)
+          .eq('id', editingItem.id);
+        if (error) throw error;
+        savedId = editingItem.id;
         toast.success('Merch oppdatert!');
       } else {
-        const newItem = { 
-          ...merchData, 
-          id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          created_at: new Date().toISOString(),
-        };
-        LocalStorageService.set('merch', [...localData, newItem]);
+        const { data, error } = await supabase
+          .from('merch')
+          .insert([{ ...supabasePayload, created_at: formData.created_at || now }])
+          .select('id')
+          .single();
+        if (error) throw error;
+        savedId = data?.id;
+        if (!savedId) throw new Error('No id returned');
         toast.success('Merch opprettet!');
+      }
+
+      const fullData: MerchItem = {
+        ...formData,
+        id: savedId,
+        name: supabasePayload.name,
+        description: supabasePayload.description,
+        name_nb: formData.name_nb,
+        name_en: formData.name_en,
+        description_nb: formData.description_nb,
+        description_en: formData.description_en,
+        image_urls: imageUrls,
+        sizes,
+        colors,
+        price: supabasePayload.price,
+        currency: supabasePayload.currency,
+        category: supabasePayload.category || '',
+        stock_quantity: formData.stock_quantity,
+        status: supabasePayload.status,
+        featured: supabasePayload.featured,
+        display_order: supabasePayload.display_order,
+        updated_at: now,
+        created_at: formData.created_at || now,
+      };
+      const localData = LocalStorageService.get<MerchItem>('merch');
+      const existingIndex = localData.findIndex(m => m.id === savedId);
+      if (existingIndex >= 0) {
+        const updated = [...localData];
+        updated[existingIndex] = { ...updated[existingIndex], ...fullData };
+        LocalStorageService.set('merch', updated);
+      } else {
+        LocalStorageService.set('merch', [...localData, fullData]);
       }
 
       setEditingItem(null);
@@ -198,8 +240,58 @@ export function MerchManager() {
       });
       fetchMerch();
     } catch (error: any) {
-      console.error('Error saving merch:', error);
-      toast.error('Kunne ikke lagre merch');
+      console.warn('Supabase save failed, using localStorage:', error);
+      try {
+        const merchData = {
+          ...formData,
+          image_urls: imageUrls,
+          sizes,
+          colors,
+          updated_at: now,
+          created_at: formData.created_at || now,
+        };
+        const localData = LocalStorageService.get<MerchItem>('merch');
+        if (editingItem?.id) {
+          const updated = localData.map(m =>
+            m.id === editingItem.id
+              ? { ...merchData, id: editingItem.id, created_at: m.created_at || now }
+              : m
+          );
+          LocalStorageService.set('merch', updated);
+          toast.success('Merch oppdatert (lokal lagring)');
+        } else {
+          const newItem = {
+            ...merchData,
+            id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            created_at: now,
+          };
+          LocalStorageService.set('merch', [...localData, newItem]);
+          toast.success('Merch opprettet (lokal lagring)');
+        }
+        setEditingItem(null);
+        setFormData({
+          name: '',
+          name_nb: '',
+          name_en: '',
+          description: '',
+          description_nb: '',
+          description_en: '',
+          price: 0,
+          currency: 'NOK',
+          image_urls: [],
+          category: '',
+          sizes: [],
+          colors: [],
+          stock_quantity: undefined,
+          status: 'published',
+          featured: false,
+          display_order: 0,
+        });
+        fetchMerch();
+      } catch (localError) {
+        console.error('Error saving merch:', localError);
+        toast.error('Kunne ikke lagre merch');
+      }
     }
   }
 

@@ -46,10 +46,22 @@ Then trigger a new deploy so the site uses the correct URL in links and metadata
 
 ---
 
-## 3. Quick checklist
+## 3. Data not reaching Supabase (tables stay empty)
+
+If the site shows "success" but Supabase tables stay empty:
+
+1. **You should see an error toast** when Supabase is not used: the app now shows "Lagret bare lokalt" / "Saved locally only" when it falls back to localStorage, so you know it didn’t reach Supabase.
+2. **If you only ever see success** (no error), the **live site may be an old build** that doesn’t call Supabase:
+   - Push your latest code to GitHub.
+   - In Netlify: **Site configuration** → **Environment variables** → confirm `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are set.
+   - **Deploys** → **Trigger deploy** → **Deploy site** (so the new build includes env vars and latest code).
+3. **If you see an error toast** (e.g. RLS or "Could not send"): run **`supabase/FIX_ANON_POLICIES_ONLY.sql`** in the Supabase SQL Editor so the anon key can write, then try again.
+
+## 4. Quick checklist
 
 - [ ] Supabase: Project URL and Anon key in Netlify env vars.
-- [ ] New deploy triggered after adding env vars.
+- [ ] New deploy triggered after adding env vars (and after pushing code that uses Supabase).
+- [ ] Run `FIX_ANON_POLICIES_ONLY.sql` in Supabase if tables exist but inserts fail.
 - [ ] Custom domain added under **Domain management**.
 - [ ] DNS (Netlify or external) updated and propagated.
 - [ ] (Optional) `VITE_SITE_URL` set to your custom domain and redeploy.

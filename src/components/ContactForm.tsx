@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { toast, Toaster } from 'react-hot-toast';
+import { supabase } from '../lib/supabase';
 
 interface ContactFormData {
   name: string;
@@ -20,26 +21,40 @@ export function ContactForm() {
     setIsSubmitting(true);
 
     try {
-      console.log('Submitting contact form:', formData);
-      
-      // Use localStorage directly (Supabase will be set up later)
-      const existingMessages = JSON.parse(localStorage.getItem('contact_messages') || '[]');
-      const newMessage = {
-        id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        name: formData.name,
-        email: formData.email,
-        message: formData.message,
-        status: 'unread',
-        created_at: new Date().toISOString(),
-        admin_notes: null,
-      };
-      localStorage.setItem('contact_messages', JSON.stringify([...existingMessages, newMessage]));
+      const { error } = await supabase
+        .from('contact_messages')
+        .insert([{
+          name: formData.name,
+          email: formData.email,
+          message: formData.message,
+          status: 'unread',
+        }]);
+
+      if (error) throw error;
 
       toast.success('Meldingen din er sendt! Vi tar kontakt snart.');
       setFormData({ name: '', email: '', message: '' });
-    } catch (error) {
-      console.error('Error submitting contact form:', error);
-      toast.error('Beklager, noe gikk galt. Vennligst prøv igjen senere.');
+    } catch (error: any) {
+      const errMsg = error?.message || String(error);
+      console.warn('Supabase contact insert failed:', error);
+      toast.error(`Ikke sendt til Supabase: ${errMsg.slice(0, 50)}${errMsg.length > 50 ? '…' : ''}`);
+      try {
+        const existingMessages = JSON.parse(localStorage.getItem('contact_messages') || '[]');
+        const newMessage = {
+          id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          name: formData.name,
+          email: formData.email,
+          message: formData.message,
+          status: 'unread',
+          created_at: new Date().toISOString(),
+          admin_notes: null,
+        };
+        localStorage.setItem('contact_messages', JSON.stringify([...existingMessages, newMessage]));
+        toast.error('Lagret bare lokalt. Meldingen kom ikke til Supabase – sjekk RLS og env vars, så redeploy.');
+        setFormData({ name: '', email: '', message: '' });
+      } catch (localError) {
+        toast.error('Beklager, noe gikk galt. Vennligst prøv igjen senere.');
+      }
     } finally {
       setIsSubmitting(false);
     }

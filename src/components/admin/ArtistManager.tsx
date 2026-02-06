@@ -71,10 +71,15 @@ export function ArtistManager() {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        // Ensure arrays and strings are initialized
+        // Normalize so name_nb/name_en and links always exist for edit form
         const normalizedData = data.map((item: any) => ({
           ...item,
+          name: item.name || '',
+          name_nb: item.name_nb ?? item.name ?? '',
+          name_en: item.name_en ?? '',
           bio: item.bio || '',
+          bio_nb: item.bio_nb ?? item.bio ?? '',
+          bio_en: item.bio_en ?? '',
           image_url: item.image_url || '',
           spotify_url: item.spotify_url || '',
           spotify_embed_url: item.spotify_embed_url || '',
@@ -82,15 +87,19 @@ export function ArtistManager() {
           instagram_url: item.instagram_url || '',
           facebook_url: item.facebook_url || '',
           youtube_url: item.youtube_url || '',
-          other_links: item.other_links || [],
+          other_links: Array.isArray(item.other_links) ? item.other_links : [],
         }));
         setArtists(normalizedData as Artist[]);
       } else {
         const localData = LocalStorageService.get<Artist>('artists');
-        // Ensure arrays and strings are initialized
         const normalizedData = localData.map((item: any) => ({
           ...item,
+          name: item.name || '',
+          name_nb: item.name_nb ?? item.name ?? '',
+          name_en: item.name_en ?? '',
           bio: item.bio || '',
+          bio_nb: item.bio_nb ?? item.bio ?? '',
+          bio_en: item.bio_en ?? '',
           image_url: item.image_url || '',
           spotify_url: item.spotify_url || '',
           spotify_embed_url: item.spotify_embed_url || '',
@@ -98,18 +107,22 @@ export function ArtistManager() {
           instagram_url: item.instagram_url || '',
           facebook_url: item.facebook_url || '',
           youtube_url: item.youtube_url || '',
-          other_links: item.other_links || [],
+          other_links: Array.isArray(item.other_links) ? item.other_links : [],
         }));
-        setArtists(normalizedData.sort((a, b) => a.display_order - b.display_order || a.name.localeCompare(b.name)));
+        setArtists(normalizedData.sort((a, b) => a.display_order - b.display_order || (a.name || '').localeCompare(b.name || '')));
       }
     } catch (error) {
       console.warn('Supabase fetch failed, using localStorage:', error);
       try {
         const data = LocalStorageService.get<Artist>('artists');
-        // Ensure arrays and strings are initialized
         const normalizedData = data.map((item: any) => ({
           ...item,
+          name: item.name || '',
+          name_nb: item.name_nb ?? item.name ?? '',
+          name_en: item.name_en ?? '',
           bio: item.bio || '',
+          bio_nb: item.bio_nb ?? item.bio ?? '',
+          bio_en: item.bio_en ?? '',
           image_url: item.image_url || '',
           spotify_url: item.spotify_url || '',
           spotify_embed_url: item.spotify_embed_url || '',
@@ -117,9 +130,9 @@ export function ArtistManager() {
           instagram_url: item.instagram_url || '',
           facebook_url: item.facebook_url || '',
           youtube_url: item.youtube_url || '',
-          other_links: item.other_links || [],
+          other_links: Array.isArray(item.other_links) ? item.other_links : [],
         }));
-        setArtists(normalizedData.sort((a, b) => a.display_order - b.display_order || a.name.localeCompare(b.name)));
+        setArtists(normalizedData.sort((a, b) => a.display_order - b.display_order || (a.name || '').localeCompare(b.name || '')));
       } catch (localError) {
         console.error('Error fetching artists:', localError);
         toast.error('Kunne ikke hente artister');
@@ -148,36 +161,70 @@ export function ArtistManager() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const otherLinks = Array.isArray(formData.other_links) ? formData.other_links.filter(link => link && link.url) : [];
+    const now = new Date().toISOString();
+    // Payload for Supabase (table has name, bio; app uses name_nb/name_en for i18n)
+    const supabasePayload = {
+      name: formData.name_nb || formData.name || '',
+      bio: formData.bio_nb || formData.bio || '',
+      image_url: formData.image_url || null,
+      spotify_url: formData.spotify_url || null,
+      spotify_embed_url: formData.spotify_embed_url || null,
+      website_url: formData.website_url || null,
+      instagram_url: formData.instagram_url || null,
+      facebook_url: formData.facebook_url || null,
+      youtube_url: formData.youtube_url || null,
+      other_links: otherLinks,
+      status: formData.status || 'published',
+      featured: formData.featured ?? false,
+      display_order: formData.display_order ?? 0,
+      updated_at: now,
+    };
+
     try {
-      // Ensure arrays are properly formatted before saving
-      const artistData = {
-        ...formData,
-        other_links: Array.isArray(formData.other_links) ? formData.other_links.filter(link => link && link.url) : [],
-        updated_at: new Date().toISOString(),
-        created_at: formData.created_at || new Date().toISOString(),
-      };
-
-      // Use localStorage directly (Supabase will be set up later)
-      const localData = LocalStorageService.get<Artist>('artists');
-
+      let savedId: string;
       if (editingArtist?.id) {
-        // Update existing
-        const updated = localData.map(a => 
-          a.id === editingArtist.id 
-            ? { ...artistData, id: editingArtist.id, created_at: a.created_at || new Date().toISOString() } 
-            : a
-        );
-        LocalStorageService.set('artists', updated);
+        const { error } = await supabase
+          .from('artists')
+          .update(supabasePayload)
+          .eq('id', editingArtist.id);
+        if (error) throw error;
+        savedId = editingArtist.id;
         toast.success('Artist oppdatert!');
       } else {
-        // Create new
-        const newArtist = { 
-          ...artistData, 
-          id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          created_at: new Date().toISOString(),
-        };
-        LocalStorageService.set('artists', [...localData, newArtist]);
+        const { data, error } = await supabase
+          .from('artists')
+          .insert([{ ...supabasePayload, created_at: formData.created_at || now }])
+          .select('id')
+          .single();
+        if (error) throw error;
+        savedId = data?.id;
+        if (!savedId) throw new Error('No id returned');
         toast.success('Artist opprettet!');
+      }
+
+      // Sync to localStorage as backup/cache
+      const fullData = {
+        ...formData,
+        id: savedId,
+        name: supabasePayload.name,
+        bio: supabasePayload.bio,
+        name_nb: formData.name_nb,
+        name_en: formData.name_en,
+        bio_nb: formData.bio_nb,
+        bio_en: formData.bio_en,
+        other_links: otherLinks,
+        updated_at: now,
+        created_at: formData.created_at || now,
+      };
+      const localData = LocalStorageService.get<Artist>('artists');
+      const existingIndex = localData.findIndex(a => a.id === savedId);
+      if (existingIndex >= 0) {
+        const updated = [...localData];
+        updated[existingIndex] = { ...updated[existingIndex], ...fullData };
+        LocalStorageService.set('artists', updated);
+      } else {
+        LocalStorageService.set('artists', [...localData, fullData]);
       }
 
       setEditingArtist(null);
@@ -202,29 +249,85 @@ export function ArtistManager() {
       });
       fetchArtists();
     } catch (error: any) {
-      console.error('Error saving artist:', error);
-      toast.error('Kunne ikke lagre artist');
+      const errMsg = error?.message || String(error);
+      console.warn('Supabase save failed, using localStorage:', error);
+      toast.error(`Supabase feilet: ${errMsg.slice(0, 60)}${errMsg.length > 60 ? '…' : ''}`);
+      try {
+        const artistData = {
+          ...formData,
+          other_links: otherLinks,
+          updated_at: now,
+          created_at: formData.created_at || now,
+        };
+        const localData = LocalStorageService.get<Artist>('artists');
+        if (editingArtist?.id) {
+          const updated = localData.map(a =>
+            a.id === editingArtist.id
+              ? { ...artistData, id: editingArtist.id, created_at: a.created_at || now }
+              : a
+          );
+          LocalStorageService.set('artists', updated);
+          toast.error('Lagret bare lokalt. Kom ikke til Supabase – kjør FIX_ANON_POLICIES_ONLY.sql og sjekk env vars.');
+        } else {
+          const newArtist = {
+            ...artistData,
+            id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            created_at: now,
+          };
+          LocalStorageService.set('artists', [...localData, newArtist]);
+          toast.error('Lagret bare lokalt. Kom ikke til Supabase – kjør FIX_ANON_POLICIES_ONLY.sql og sjekk env vars.');
+        }
+        setEditingArtist(null);
+        setFormData({
+          name: '',
+          name_nb: '',
+          name_en: '',
+          bio: '',
+          bio_nb: '',
+          bio_en: '',
+          image_url: '',
+          spotify_url: '',
+          spotify_embed_url: '',
+          website_url: '',
+          instagram_url: '',
+          facebook_url: '',
+          youtube_url: '',
+          other_links: [],
+          status: 'published',
+          featured: false,
+          display_order: 0,
+        });
+        fetchArtists();
+      } catch (localError) {
+        console.error('Error saving artist:', localError);
+        toast.error('Kunne ikke lagre artist');
+      }
     }
   }
 
   function handleEdit(artist: Artist) {
     setEditingArtist(artist);
+    const links = Array.isArray(artist.other_links) ? [...artist.other_links] : [];
     setFormData({
-      ...artist,
-      name: artist.name || artist.name_nb || '',
-      name_nb: artist.name_nb || artist.name || '',
-      name_en: artist.name_en || '',
-      bio: artist.bio || artist.bio_nb || '',
-      bio_nb: artist.bio_nb || artist.bio || '',
-      bio_en: artist.bio_en || '',
-      image_url: artist.image_url || '',
-      spotify_url: artist.spotify_url || '',
-      spotify_embed_url: artist.spotify_embed_url || '',
-      website_url: artist.website_url || '',
-      instagram_url: artist.instagram_url || '',
-      facebook_url: artist.facebook_url || '',
-      youtube_url: artist.youtube_url || '',
-      other_links: artist.other_links || [],
+      id: artist.id,
+      created_at: artist.created_at,
+      name: artist.name ?? artist.name_nb ?? '',
+      name_nb: artist.name_nb ?? artist.name ?? '',
+      name_en: artist.name_en ?? '',
+      bio: artist.bio ?? artist.bio_nb ?? '',
+      bio_nb: artist.bio_nb ?? artist.bio ?? '',
+      bio_en: artist.bio_en ?? '',
+      image_url: artist.image_url ?? '',
+      spotify_url: artist.spotify_url ?? '',
+      spotify_embed_url: artist.spotify_embed_url ?? '',
+      website_url: artist.website_url ?? '',
+      instagram_url: artist.instagram_url ?? '',
+      facebook_url: artist.facebook_url ?? '',
+      youtube_url: artist.youtube_url ?? '',
+      other_links: links,
+      status: artist.status ?? 'published',
+      featured: artist.featured ?? false,
+      display_order: artist.display_order ?? 0,
     });
   }
 
