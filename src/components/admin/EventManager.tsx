@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
+import { ImageUploadField } from './ImageUploadField';
 
 type Artist = {
   id?: string;
@@ -52,6 +53,7 @@ export function EventManager() {
   const [selectedArtists, setSelectedArtists] = useState<EventArtist[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const [formData, setFormData] = useState<Partial<Event>>({
     title: '',
     title_nb: '',
@@ -257,34 +259,90 @@ export function EventManager() {
     }
   }
 
-  function handleEdit(event: Event) {
+  async function handleEdit(event: Event) {
+    if (!event?.id) return;
     setEditingEvent(event);
-    setFormData({
-      title: event.title || event.title_nb || '',
-      title_nb: event.title_nb || event.title || '',
-      title_en: event.title_en || '',
-      description: event.description || event.description_nb || '',
-      description_nb: event.description_nb || event.description || '',
-      description_en: event.description_en || '',
-      event_date: event.event_date,
-      location: event.location,
-      status: event.status,
-      image_url: event.image_url || '',
-      ticket_price: event.ticket_price,
-      tickets_url: event.tickets_url || '',
-      venue_name: event.venue_name || '',
-      venue_address: event.venue_address || '',
-      venue_city: event.venue_city || '',
-      venue_country: event.venue_country || 'Norway',
-      tour_name: event.tour_name || '',
-      event_type: event.event_type || 'concert',
-      capacity: event.capacity,
-      doors_open: event.doors_open || '',
-      support_acts: event.support_acts || [],
-      promoter: event.promoter || '',
-      production_notes: event.production_notes || '',
-    });
-    setSelectedArtists(event.artists || []);
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select(`
+          *,
+          event_artists (
+            id,
+            artist_id,
+            is_headliner,
+            performance_order,
+            artists (id, name)
+          )
+        `)
+        .eq('id', event.id)
+        .single();
+      if (error) throw error;
+      const ev = data as any;
+      const eventArtists = (ev?.event_artists || []).map((ea: any) => ({
+        id: ea.id,
+        artist_id: ea.artist_id,
+        artist_name: ea.artists?.name || '',
+        is_headliner: ea.is_headliner,
+        performance_order: ea.performance_order,
+      }));
+      setFormData({
+        title: ev.title || ev.title_nb || '',
+        title_nb: ev.title_nb || ev.title || '',
+        title_en: ev.title_en || '',
+        description: ev.description || ev.description_nb || '',
+        description_nb: ev.description_nb || ev.description || '',
+        description_en: ev.description_en || '',
+        event_date: ev.event_date,
+        location: ev.location,
+        status: ev.status,
+        image_url: ev.image_url || '',
+        ticket_price: ev.ticket_price,
+        tickets_url: ev.tickets_url || '',
+        venue_name: ev.venue_name || '',
+        venue_address: ev.venue_address || '',
+        venue_city: ev.venue_city || '',
+        venue_country: ev.venue_country || 'Norway',
+        tour_name: ev.tour_name || '',
+        event_type: ev.event_type || 'concert',
+        capacity: ev.capacity,
+        doors_open: ev.doors_open || '',
+        support_acts: ev.support_acts || [],
+        promoter: ev.promoter || '',
+        production_notes: ev.production_notes || '',
+      });
+      setSelectedArtists(eventArtists);
+    } catch (err) {
+      console.error('Failed to fetch event for edit:', err);
+      toast.error('Kunne ikke hente arrangementdata');
+      setFormData({
+        title: event.title || event.title_nb || '',
+        title_nb: event.title_nb || event.title || '',
+        title_en: event.title_en || '',
+        description: event.description || event.description_nb || '',
+        description_nb: event.description_nb || event.description || '',
+        description_en: event.description_en || '',
+        event_date: event.event_date,
+        location: event.location,
+        status: event.status,
+        image_url: event.image_url || '',
+        ticket_price: event.ticket_price,
+        tickets_url: event.tickets_url || '',
+        venue_name: event.venue_name || '',
+        venue_address: event.venue_address || '',
+        venue_city: event.venue_city || '',
+        venue_country: event.venue_country || 'Norway',
+        tour_name: event.tour_name || '',
+        event_type: event.event_type || 'concert',
+        capacity: event.capacity,
+        doors_open: event.doors_open || '',
+        support_acts: event.support_acts || [],
+        promoter: event.promoter || '',
+        production_notes: event.production_notes || '',
+      });
+      setSelectedArtists(event.artists || []);
+    }
+    requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth' }));
   }
 
   function addArtist() {
@@ -323,7 +381,7 @@ export function EventManager() {
         <h2 className="text-2xl font-bold mb-6">
           {editingEvent ? 'Rediger Arrangement' : 'Opprett Nytt Arrangement'}
         </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form ref={formRef} key={editingEvent?.id ?? 'new'} onSubmit={handleSubmit} className="space-y-4">
           <div className="border-b border-gray-200 mb-4">
             <div className="flex gap-4">
               <button
@@ -543,16 +601,12 @@ export function EventManager() {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Bilde URL</label>
-            <input
-              type="url"
-              value={formData.image_url || ''}
-              onChange={e => setFormData({ ...formData, image_url: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1d4f4d] focus:ring-[#1d4f4d]"
-              placeholder="https://example.com/image.jpg"
-            />
-          </div>
+          <ImageUploadField
+            label="Bilde"
+            value={formData.image_url || ''}
+            onChange={(url) => setFormData({ ...formData, image_url: url })}
+            folder="events"
+          />
 
           <div>
             <label className="block text-sm font-medium text-gray-700">Billettpris (NOK)</label>

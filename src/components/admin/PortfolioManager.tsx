@@ -4,6 +4,7 @@ import { useLanguageStore } from '../../stores/languageStore';
 import { LocalStorageService } from '../../lib/localStorage';
 import { supabase } from '../../lib/supabase';
 import { RichTextEditor } from './RichTextEditor';
+import { ImageUploadMultiField } from './ImageUploadMultiField';
 
 interface PortfolioProject {
   id?: string;
@@ -35,7 +36,6 @@ export function PortfolioManager() {
     featured: false,
   });
   const [techInput, setTechInput] = useState('');
-  const [imageInput, setImageInput] = useState('');
 
   useEffect(() => {
     fetchProjects();
@@ -83,17 +83,6 @@ export function PortfolioManager() {
 
   function handleRemoveTech(tech: string) {
     setFormData({ ...formData, tech_stack: formData.tech_stack.filter(t => t !== tech) });
-  }
-
-  function handleAddImage() {
-    if (imageInput.trim() && !formData.image_urls.includes(imageInput.trim())) {
-      setFormData({ ...formData, image_urls: [...formData.image_urls, imageInput.trim()] });
-      setImageInput('');
-    }
-  }
-
-  function handleRemoveImage(url: string) {
-    setFormData({ ...formData, image_urls: formData.image_urls.filter(img => img !== url) });
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -301,43 +290,12 @@ export function PortfolioManager() {
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Bilde-URLs</label>
-          <div className="flex gap-2 mb-2">
-            <input
-              type="url"
-              value={imageInput}
-              onChange={(e) => setImageInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddImage())}
-              className="flex-1 p-2 border rounded-md focus:ring-2 focus:ring-primary-600"
-              placeholder="Legg til bilde-URL..."
-            />
-            <button
-              type="button"
-              onClick={handleAddImage}
-              className="bg-neutral-200 px-4 py-2 rounded-md hover:bg-neutral-300"
-            >
-              Legg til
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {formData.image_urls.map((url, idx) => (
-              <span
-                key={idx}
-                className="bg-neutral-100 text-neutral-800 px-3 py-1 rounded text-sm flex items-center gap-2"
-              >
-                {url.substring(0, 30)}...
-                <button
-                  type="button"
-                  onClick={() => handleRemoveImage(url)}
-                  className="hover:text-red-600"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        </div>
+        <ImageUploadMultiField
+          label="Bilde-URLs"
+          values={formData.image_urls || []}
+          onChange={(urls) => setFormData({ ...formData, image_urls: urls })}
+          folder="portfolio"
+        />
 
         <div className="grid grid-cols-2 gap-4">
           <div>

@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { useLanguageStore } from '../../stores/languageStore';
 import { supabase } from '../../lib/supabase';
 import { RichTextEditor } from './RichTextEditor';
+import { ImageUploadField } from './ImageUploadField';
 import { X, Plus } from 'lucide-react';
 
 interface Artist {
@@ -54,6 +55,7 @@ export function ArtistManager() {
   });
   const [linkLabel, setLinkLabel] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     fetchArtists();
@@ -190,37 +192,77 @@ export function ArtistManager() {
     }
   }
 
-  function handleEdit(artist: Artist) {
+  async function handleEdit(artist: Artist) {
+    if (!artist?.id) return;
     setEditingArtist(artist);
-    const links = Array.isArray(artist.other_links) ? [...artist.other_links] : [];
-    setFormData({
-      id: artist.id,
-      created_at: artist.created_at,
-      name: artist.name ?? artist.name_nb ?? '',
-      name_nb: artist.name_nb ?? artist.name ?? '',
-      name_en: artist.name_en ?? '',
-      bio: artist.bio ?? artist.bio_nb ?? '',
-      bio_nb: artist.bio_nb ?? artist.bio ?? '',
-      bio_en: artist.bio_en ?? '',
-      image_url: artist.image_url ?? '',
-      spotify_url: artist.spotify_url ?? '',
-      spotify_embed_url: artist.spotify_embed_url ?? '',
-      website_url: artist.website_url ?? '',
-      instagram_url: artist.instagram_url ?? '',
-      facebook_url: artist.facebook_url ?? '',
-      youtube_url: artist.youtube_url ?? '',
-      other_links: links,
-      status: artist.status ?? 'published',
-      featured: artist.featured ?? false,
-      display_order: artist.display_order ?? 0,
-    });
+    try {
+      const { data, error } = await supabase
+        .from('artists')
+        .select('*')
+        .eq('id', artist.id)
+        .single();
+      if (error) throw error;
+      const item = data as any;
+      const links = Array.isArray(item?.other_links) ? [...item.other_links] : [];
+      setFormData({
+        id: item.id,
+        created_at: item.created_at,
+        name: item.name ?? item.name_nb ?? '',
+        name_nb: item.name_nb ?? item.name ?? '',
+        name_en: item.name_en ?? '',
+        bio: item.bio ?? item.bio_nb ?? '',
+        bio_nb: item.bio_nb ?? item.bio ?? '',
+        bio_en: item.bio_en ?? '',
+        image_url: item.image_url ?? '',
+        spotify_url: item.spotify_url ?? '',
+        spotify_embed_url: item.spotify_embed_url ?? '',
+        website_url: item.website_url ?? '',
+        instagram_url: item.instagram_url ?? '',
+        facebook_url: item.facebook_url ?? '',
+        youtube_url: item.youtube_url ?? '',
+        other_links: links,
+        status: item.status ?? 'published',
+        featured: item.featured ?? false,
+        display_order: item.display_order ?? 0,
+      });
+    } catch (err) {
+      console.error('Failed to fetch artist for edit:', err);
+      toast.error('Kunne ikke hente artistdata');
+      const links = Array.isArray(artist.other_links) ? [...artist.other_links] : [];
+      setFormData({
+        id: artist.id,
+        created_at: artist.created_at,
+        name: artist.name ?? artist.name_nb ?? '',
+        name_nb: artist.name_nb ?? artist.name ?? '',
+        name_en: artist.name_en ?? '',
+        bio: artist.bio ?? artist.bio_nb ?? '',
+        bio_nb: artist.bio_nb ?? artist.bio ?? '',
+        bio_en: artist.bio_en ?? '',
+        image_url: artist.image_url ?? '',
+        spotify_url: artist.spotify_url ?? '',
+        spotify_embed_url: artist.spotify_embed_url ?? '',
+        website_url: artist.website_url ?? '',
+        instagram_url: artist.instagram_url ?? '',
+        facebook_url: artist.facebook_url ?? '',
+        youtube_url: artist.youtube_url ?? '',
+        other_links: links,
+        status: artist.status ?? 'published',
+        featured: artist.featured ?? false,
+        display_order: artist.display_order ?? 0,
+      });
+    }
+    requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth' }));
   }
 
   function handleNew() {
     setEditingArtist(null);
     setFormData({
       name: '',
+      name_nb: '',
+      name_en: '',
       bio: '',
+      bio_nb: '',
+      bio_en: '',
       image_url: '',
       spotify_url: '',
       spotify_embed_url: '',
@@ -265,7 +307,7 @@ export function ArtistManager() {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow space-y-4">
+      <form ref={formRef} key={editingArtist?.id ?? 'new'} onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow space-y-4">
         <div className="border-b border-gray-200 mb-4 pb-2">
           <div className="flex gap-4">
             <button
@@ -325,33 +367,12 @@ export function ArtistManager() {
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Bilde URL</label>
-          <input
-            type="url"
-            value={formData.image_url || ''}
-            onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-            className="w-full p-2 border rounded-md focus:ring-2 focus:ring-primary-600"
-            placeholder="https://example.com/image.jpg"
-          />
-          {formData.image_url && (
-            <div className="mt-4">
-              <p className="text-sm font-medium mb-2">Forhåndsvisning:</p>
-              <img
-                src={formData.image_url}
-                alt="Preview"
-                className="w-64 h-64 object-cover rounded-lg border border-gray-300"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                  const errorMsg = document.createElement('p');
-                  errorMsg.className = 'text-red-600 text-sm mt-2';
-                  errorMsg.textContent = 'Kunne ikke laste bildet. Sjekk at URL-en er riktig.';
-                  (e.target as HTMLImageElement).parentElement?.appendChild(errorMsg);
-                }}
-              />
-            </div>
-          )}
-        </div>
+        <ImageUploadField
+          label="Bilde"
+          value={formData.image_url || ''}
+          onChange={(url) => setFormData({ ...formData, image_url: url })}
+          folder="artists"
+        />
 
         <div className="grid grid-cols-2 gap-4">
           <div>

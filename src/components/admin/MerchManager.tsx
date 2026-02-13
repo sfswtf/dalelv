@@ -3,6 +3,7 @@ import { toast } from 'react-hot-toast';
 import { useLanguageStore } from '../../stores/languageStore';
 import { supabase } from '../../lib/supabase';
 import { RichTextEditor } from './RichTextEditor';
+import { ImageUploadMultiField } from './ImageUploadMultiField';
 import { X, Plus } from 'lucide-react';
 
 interface MerchItem {
@@ -52,7 +53,6 @@ export function MerchManager() {
   });
   const [sizeInput, setSizeInput] = useState('');
   const [colorInput, setColorInput] = useState('');
-  const [imageInput, setImageInput] = useState('');
 
   useEffect(() => {
     fetchMerch();
@@ -109,17 +109,6 @@ export function MerchManager() {
 
   function handleRemoveColor(color: string) {
     setFormData({ ...formData, colors: formData.colors?.filter(c => c !== color) || [] });
-  }
-
-  function handleAddImage() {
-    if (imageInput.trim() && !formData.image_urls?.includes(imageInput.trim())) {
-      setFormData({ ...formData, image_urls: [...(formData.image_urls || []), imageInput.trim()] });
-      setImageInput('');
-    }
-  }
-
-  function handleRemoveImage(url: string) {
-    setFormData({ ...formData, image_urls: formData.image_urls?.filter(img => img !== url) || [] });
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -473,61 +462,12 @@ export function MerchManager() {
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Bilde URLs</label>
-          <div className="flex gap-2 mb-2">
-            <input
-              type="url"
-              value={imageInput}
-              onChange={(e) => setImageInput(e.target.value)}
-              placeholder="https://example.com/image.jpg"
-              className="flex-1 p-2 border rounded-md focus:ring-2 focus:ring-primary-600"
-            />
-            <button
-              type="button"
-              onClick={handleAddImage}
-              className="px-4 py-2 bg-neutral-200 hover:bg-neutral-300 rounded-md"
-            >
-              <Plus size={20} />
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {(formData.image_urls || []).map((url, index) => (
-              <span
-                key={index}
-                className="inline-flex items-center gap-2 px-3 py-1 bg-neutral-100 rounded-md"
-              >
-                <span className="max-w-xs truncate">{url}</span>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveImage(url)}
-                  className="text-red-600 hover:text-red-800"
-                >
-                  <X size={16} />
-                </button>
-              </span>
-            ))}
-          </div>
-          {formData.image_urls && formData.image_urls.length > 0 && (
-            <div className="mt-4">
-              <p className="text-sm font-medium mb-2">Forhåndsvisning:</p>
-              <div className="flex flex-wrap gap-4">
-                {formData.image_urls.map((url, index) => (
-                  <div key={index} className="relative">
-                    <img
-                      src={url}
-                      alt={`Preview ${index + 1}`}
-                      className="w-32 h-32 object-cover rounded-lg border border-gray-300"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+        <ImageUploadMultiField
+          label="Bilder"
+          values={formData.image_urls || []}
+          onChange={(urls) => setFormData({ ...formData, image_urls: urls })}
+          folder="merch"
+        />
 
         <div className="grid grid-cols-3 gap-4">
           <div>

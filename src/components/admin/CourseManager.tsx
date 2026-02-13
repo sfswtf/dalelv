@@ -4,6 +4,7 @@ import { useLanguageStore } from '../../stores/languageStore';
 import { LocalStorageService } from '../../lib/localStorage';
 import { supabase } from '../../lib/supabase';
 import { RichTextEditor } from './RichTextEditor';
+import { ImageUploadField } from './ImageUploadField';
 
 interface Course {
   id?: string;
@@ -242,15 +243,12 @@ export function CourseManager() {
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Kursbilde-URL</label>
-          <input
-            type="url"
-            value={formData.course_image || ''}
-            onChange={(e) => setFormData({ ...formData, course_image: e.target.value || null })}
-            className="w-full p-2 border rounded-md focus:ring-2 focus:ring-primary-600"
-          />
-        </div>
+        <ImageUploadField
+          label="Kursbilde"
+          value={formData.course_image || ''}
+          onChange={(url) => setFormData({ ...formData, course_image: url || null })}
+          folder="courses"
+        />
 
         <div>
           <label className="block text-sm font-medium mb-1">Status</label>

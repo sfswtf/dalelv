@@ -4,6 +4,7 @@ import { useLanguageStore } from '../../stores/languageStore';
 import { LocalStorageService } from '../../lib/localStorage';
 import { supabase } from '../../lib/supabase';
 import { RichTextEditor } from './RichTextEditor';
+import { ImageUploadField } from './ImageUploadField';
 
 interface AffiliateLink {
   text: string;
@@ -361,15 +362,12 @@ export function BlogManager() {
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Bilde-URL</label>
-          <input
-            type="url"
-            value={formData.featured_image || ''}
-            onChange={(e) => setFormData({ ...formData, featured_image: e.target.value || null })}
-            className="w-full p-2 border rounded-md focus:ring-2 focus:ring-primary-600"
-          />
-        </div>
+        <ImageUploadField
+          label="Bilde"
+          value={formData.featured_image || ''}
+          onChange={(url) => setFormData({ ...formData, featured_image: url || null })}
+          folder="blog"
+        />
 
         <div>
           <label className="block text-sm font-medium mb-1">Affiliate Links</label>
