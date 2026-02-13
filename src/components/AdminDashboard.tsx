@@ -5,6 +5,7 @@ import { ArtistManager } from './admin/ArtistManager';
 import { MerchManager } from './admin/MerchManager';
 import { OrdersManager } from './admin/OrdersManager';
 import { ContactMessages } from './admin/ContactMessages';
+import { LinktreeManager } from './admin/LinktreeManager';
 import { useLanguageStore } from '../stores/languageStore';
 
 interface Application {
@@ -36,7 +37,7 @@ export function AdminDashboard() {
   const [emailSubject, setEmailSubject] = useState('');
   const [emailContent, setEmailContent] = useState('');
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'artists' | 'merch' | 'orders' | 'events' | 'messages'>('artists');
+  const [activeTab, setActiveTab] = useState<'artists' | 'merch' | 'orders' | 'events' | 'messages' | 'linktree'>('artists');
   const { t } = useLanguageStore();
 
   useEffect(() => {
@@ -204,6 +205,16 @@ export function AdminDashboard() {
             >
               {t('admin.messages')}
             </button>
+            <button
+              onClick={() => setActiveTab('linktree')}
+              className={`whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm ${
+                activeTab === 'linktree'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Linktree
+            </button>
           </nav>
         </div>
 
@@ -213,6 +224,7 @@ export function AdminDashboard() {
           {activeTab === 'orders' && <OrdersManager />}
           {activeTab === 'events' && <EventManager />}
           {activeTab === 'messages' && <ContactMessages />}
+          {activeTab === 'linktree' && <LinktreeManager />}
           {false && activeTab === 'members' && (
             <div className="space-y-8">
               <div className="flex justify-between items-center">

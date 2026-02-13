@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Menu, X, Facebook, Instagram, Mail, MapPin, Sparkles, Linkedin, Twitter } from 'lucide-react';
 import { Navigation } from './components/Navigation';
@@ -38,6 +38,7 @@ const CheckoutPage = lazy(() => import('./components/CheckoutPage').then(m => ({
 const EventsPage = lazy(() => import('./components/EventsPage').then(m => ({ default: m.EventsPage })));
 const EventDetailPage = lazy(() => import('./components/EventDetailPage').then(m => ({ default: m.EventDetailPage })));
 const OrderSuccessPage = lazy(() => import('./components/OrderSuccessPage').then(m => ({ default: m.OrderSuccessPage })));
+const LinktreePage = lazy(() => import('./components/LinktreePage').then(m => ({ default: m.LinktreePage })));
 
 function App() {
   const { t, setLanguage } = useLanguageStore();
@@ -82,6 +83,7 @@ function App() {
               <Route path="/events/:id" element={<EventDetailPage />} />
               <Route path="/order-success" element={<OrderSuccessPage />} />
               <Route path="/community" element={<CommunityPage />} />
+              <Route path="/linktree" element={<LinktreePage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/onboarding" element={<OnboardingPage />} />
               <Route path="/onboarding/thanks" element={<OnboardingThanksPage />} />
@@ -195,42 +197,16 @@ function HomePage() {
               />
             )}
             
-            {/* Event tickets – two CTAs with location/date on hover */}
-            <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full max-w-2xl px-2 flex-shrink-0">
-              <a
-                href="https://bastard.antitickets.com/event/mag-kelly-kappa"
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Tromsø, Bastard Bar · 10.–11. April 2026"
-                className="w-full sm:w-auto group relative"
-              >
+            {/* LETS GO – links to linktree (add MAGG & KELLY KAPPA, KNØRVA etc. in admin) */}
+            <div className="mt-3 sm:mt-4 flex justify-center w-full max-w-2xl px-2 flex-shrink-0">
+              <Link to="/linktree" className="w-full sm:w-auto block">
                 <AnimatedButton
                   variant="primary"
-                  className="w-full sm:w-auto rounded-lg px-10 md:px-14 py-4 md:py-5 text-base md:text-lg font-semibold bg-[#FF4D00] text-white hover:bg-[#e64400] active:bg-[#cc3a00] transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-100"
+                  className="w-full sm:min-w-[280px] rounded-xl px-14 md:px-20 py-5 md:py-6 text-xl md:text-2xl font-bold bg-[#FF4D00] text-white hover:bg-[#e64400] active:bg-[#cc3a00] transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-100"
                 >
-                  MAGG & KELLY KAPPA
+                  LETS GO
                 </AnimatedButton>
-                <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-1.5 text-sm text-white bg-black/80 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-                  Tromsø · Bastard Bar · 10.–11. April 2026
-                </span>
-              </a>
-              <a
-                href="https://tikkio.com/events/61883"
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Finnsnes, Ottos · 11. April 2026"
-                className="w-full sm:w-auto group relative"
-              >
-                <AnimatedButton
-                  variant="secondary"
-                  className="w-full sm:w-auto rounded-lg px-10 md:px-14 py-4 md:py-5 text-base md:text-lg font-semibold bg-[#FF4D00] text-white hover:bg-[#e64400] active:bg-[#cc3a00] transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-100"
-                >
-                  KNØRVA 5 Year Tour
-                </AnimatedButton>
-                <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-1.5 text-sm text-white bg-black/80 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-                  Finnsnes · Ottos · 11. April 2026
-                </span>
-              </a>
+              </Link>
             </div>
           </div>
         </div>
