@@ -165,17 +165,16 @@ function HomePage() {
         imageUrl="/images/hero-background.jpg"
         videoUrl="/images/hero-intro.mp4"
       >
-        {/* Hero overlay: logo and buttons ~20% higher */}
-        <div className="relative w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-screen flex flex-col justify-start items-center pt-16 sm:pt-20 md:pt-24 lg:pt-28">
-          <div className="text-center w-full flex flex-col items-center gap-3 sm:gap-4 md:gap-5 min-h-0">
-            {/* Logo - 10% larger again */}
+        {/* Hero overlay: content in upper viewport to avoid overlap when bottom section scrolls */}
+        <div className="relative w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-screen flex flex-col justify-start items-center pt-14 sm:pt-16 md:pt-20">
+          <div className="text-center w-full flex flex-col items-center gap-2 sm:gap-3 max-h-[85vh]">
+            {/* Logo - 2x size */}
             <img
               src={siteConfig.logo.primary}
               alt={`${siteConfig.name} logo symbol`}
-              className="w-auto max-w-[90vw] h-[27.5vh] min-h-[127px] max-h-[330px] sm:h-[33vh] sm:max-h-[407px] md:h-[38.5vh] md:max-h-[484px] object-contain flex-shrink-0"
+              className="w-auto max-w-[95vw] h-[44vh] min-h-[200px] max-h-[520px] sm:h-[52vh] sm:max-h-[640px] md:h-[60vh] md:max-h-[760px] object-contain flex-shrink-0"
               style={{
                 filter: 'drop-shadow(0 0 16px rgba(0, 0, 0, 0.5))',
-                marginBottom: '-0.5rem'
               }}
               loading="eager"
             />
@@ -184,11 +183,10 @@ function HomePage() {
               <img
                 src={siteConfig.logo.secondary}
                 alt={siteConfig.name}
-                className="h-[6.35rem] sm:h-[7.6rem] md:h-[8.8rem] w-auto max-w-[85vw] object-contain flex-shrink-0"
+                className="h-[10rem] sm:h-[12rem] md:h-[14rem] w-auto max-w-[90vw] object-contain flex-shrink-0"
                 style={{
                   mixBlendMode: 'normal',
                   filter: 'drop-shadow(0 0 8px rgba(0, 0, 0, 0.3))',
-                  marginTop: '-0.5rem'
                 }}
                 loading="eager"
                 onError={(e) => {
@@ -197,14 +195,14 @@ function HomePage() {
               />
             )}
             
-            {/* LETS GO – links to linktree (add MAGG & KELLY KAPPA, KNØRVA etc. in admin) */}
-            <div className="mt-3 sm:mt-4 flex justify-center w-full max-w-2xl px-2 flex-shrink-0">
+            {/* LETS GO – links to linktree */}
+            <div className="flex justify-center w-full px-2 flex-shrink-0 mt-2 sm:mt-3">
               <Link to="/linktree" className="w-full sm:w-auto block">
                 <AnimatedButton
                   variant="primary"
                   className="w-full sm:min-w-[280px] rounded-xl px-14 md:px-20 py-5 md:py-6 text-xl md:text-2xl font-bold bg-[#FF4D00] text-white hover:bg-[#e64400] active:bg-[#cc3a00] transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-100"
                 >
-                  LETS GO
+                  TICKETS
                 </AnimatedButton>
               </Link>
             </div>
@@ -212,8 +210,8 @@ function HomePage() {
         </div>
       </ParallaxHero>
 
-      {/* Bottom Image Section - positioned below fixed hero */}
-      <div className="relative z-10" style={{ marginTop: '100vh', backgroundColor: 'transparent' }}>
+      {/* Bottom Image Section - 15vh buffer prevents overlap with hero button */}
+      <div className="relative z-10" style={{ marginTop: '115vh', backgroundColor: 'transparent' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-4" style={{ backgroundColor: 'transparent' }}>
           <div className="max-w-5xl mx-auto">
             <img

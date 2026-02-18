@@ -135,19 +135,38 @@ export function CourseManager() {
     });
   }
 
-  function handleEdit(course: Course) {
-    // Set editing course and form data
+  async function handleEdit(course: Course) {
+    if (!course?.id) return;
     setEditingCourse(course);
-    setFormData({
-      ...course,
-      // Ensure all fields are set
-      title: course.title || '',
-      description: course.description || '',
-      price: course.price || 0,
-      currency: course.currency || 'NOK',
-      course_image: course.course_image || null,
-      status: course.status || 'draft',
-    });
+    try {
+      const { data, error } = await supabase
+        .from('courses')
+        .select('*')
+        .eq('id', course.id)
+        .single();
+      if (error) throw error;
+      const row = data as any;
+      setFormData({
+        id: row.id,
+        title: row.title || '',
+        description: row.description || '',
+        price: row.price ?? 0,
+        currency: row.currency || 'NOK',
+        course_image: row.course_image || null,
+        status: row.status || 'draft',
+      });
+    } catch (err) {
+      console.warn('Supabase fetch failed, using list data:', err);
+      setFormData({
+        ...course,
+        title: course.title || '',
+        description: course.description || '',
+        price: course.price ?? 0,
+        currency: course.currency || 'NOK',
+        course_image: course.course_image || null,
+        status: course.status || 'draft',
+      });
+    }
   }
   
   function handleNewCourse() {

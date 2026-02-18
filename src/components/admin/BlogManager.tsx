@@ -224,19 +224,42 @@ export function BlogManager() {
     setIsAffiliate(false);
   }
 
-  function handleEdit(post: BlogPost) {
+  async function handleEdit(post: BlogPost) {
+    if (!post?.id) return;
     setEditingPost(post);
-    setFormData({
-      title: post.title,
-      slug: post.slug,
-      content: post.content,
-      category: post.category,
-      tags: post.tags,
-      featured_image: post.featured_image,
-      published_at: post.published_at,
-      status: post.status,
-      affiliate_links: post.affiliate_links || [],
-    });
+    try {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .eq('id', post.id)
+        .single();
+      if (error) throw error;
+      const item = data as BlogPost;
+      setFormData({
+        title: item.title || '',
+        slug: item.slug || '',
+        content: item.content || '',
+        category: item.category || '',
+        tags: item.tags || [],
+        featured_image: item.featured_image || null,
+        published_at: item.published_at || null,
+        status: item.status || 'draft',
+        affiliate_links: item.affiliate_links || [],
+      });
+    } catch (err) {
+      console.warn('Supabase fetch failed, using list data:', err);
+      setFormData({
+        title: post.title || '',
+        slug: post.slug || '',
+        content: post.content || '',
+        category: post.category || '',
+        tags: post.tags || [],
+        featured_image: post.featured_image || null,
+        published_at: post.published_at || null,
+        status: post.status || 'draft',
+        affiliate_links: post.affiliate_links || [],
+      });
+    }
   }
 
   async function handleDelete(id: string) {

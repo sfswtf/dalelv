@@ -182,57 +182,64 @@ export function MerchManager() {
     }
   }
 
-  function handleEdit(item: MerchItem) {
+  async function handleEdit(item: MerchItem) {
+    if (!item?.id) return;
     setEditingItem(item);
-    const itemToEdit = item;
-    
-    // Normalize arrays - handle both array and non-array formats
-    let normalizedSizes: string[] = [];
-    if (Array.isArray(itemToEdit.sizes)) {
-      normalizedSizes = itemToEdit.sizes;
-    } else if (itemToEdit.sizes) {
-      normalizedSizes = [itemToEdit.sizes];
-    }
-    
-    let normalizedColors: string[] = [];
-    if (Array.isArray(itemToEdit.colors)) {
-      normalizedColors = itemToEdit.colors;
-    } else if (itemToEdit.colors) {
-      normalizedColors = [itemToEdit.colors];
-    }
-    
-    let normalizedImageUrls: string[] = [];
-    if (Array.isArray(itemToEdit.image_urls)) {
-      normalizedImageUrls = itemToEdit.image_urls.filter((url: any) => url && typeof url === 'string');
-    } else if (itemToEdit.image_urls && typeof itemToEdit.image_urls === 'string') {
-      normalizedImageUrls = [itemToEdit.image_urls];
-    } else if (itemToEdit.image_url && typeof itemToEdit.image_url === 'string') {
-      normalizedImageUrls = [itemToEdit.image_url];
-    }
-    
-    setFormData({
-      ...itemToEdit,
-      name: itemToEdit.name || itemToEdit.name_nb || '',
-      name_nb: itemToEdit.name_nb || itemToEdit.name || '',
-      name_en: itemToEdit.name_en || '',
-      description: itemToEdit.description || itemToEdit.description_nb || '',
-      description_nb: itemToEdit.description_nb || itemToEdit.description || '',
-      description_en: itemToEdit.description_en || '',
-      sizes: normalizedSizes,
-      colors: normalizedColors,
-      image_urls: normalizedImageUrls,
-      category: itemToEdit.category || '',
-      stock_quantity: itemToEdit.stock_quantity || undefined,
-    });
-    
-    console.log('Editing item:', {
-      original: itemToEdit,
-      normalized: {
+    try {
+      const { data, error } = await supabase
+        .from('merch')
+        .select('*')
+        .eq('id', item.id)
+        .single();
+      if (error) throw error;
+      const row = data as any;
+      const normalizedSizes = Array.isArray(row.sizes) ? row.sizes : row.sizes ? [row.sizes] : [];
+      const normalizedColors = Array.isArray(row.colors) ? row.colors : row.colors ? [row.colors] : [];
+      const normalizedImageUrls = Array.isArray(row.image_urls)
+        ? row.image_urls.filter((u: any) => u && typeof u === 'string')
+        : row.image_urls ? [row.image_urls] : row.image_url ? [row.image_url] : [];
+      setFormData({
+        id: row.id,
+        name: row.name || row.name_nb || '',
+        name_nb: row.name_nb || row.name || '',
+        name_en: row.name_en || '',
+        description: row.description || row.description_nb || '',
+        description_nb: row.description_nb || row.description || '',
+        description_en: row.description_en || '',
+        price: row.price ?? 0,
+        currency: row.currency || 'NOK',
+        image_urls: normalizedImageUrls,
+        category: row.category || '',
+        sizes: normalizedSizes,
+        colors: normalizedColors,
+        stock_quantity: row.stock_quantity ?? undefined,
+        status: row.status || 'published',
+        featured: row.featured ?? false,
+        display_order: row.display_order ?? 0,
+      });
+    } catch (err) {
+      console.warn('Supabase fetch failed, using list data:', err);
+      const itemToEdit = item;
+      const normalizedSizes = Array.isArray(itemToEdit.sizes) ? itemToEdit.sizes : itemToEdit.sizes ? [itemToEdit.sizes] : [];
+      const normalizedColors = Array.isArray(itemToEdit.colors) ? itemToEdit.colors : itemToEdit.colors ? [itemToEdit.colors] : [];
+      const normalizedImageUrls = Array.isArray(itemToEdit.image_urls)
+        ? itemToEdit.image_urls.filter((u: any) => u && typeof u === 'string')
+        : itemToEdit.image_urls ? [itemToEdit.image_urls] : [];
+      setFormData({
+        ...itemToEdit,
+        name: itemToEdit.name || itemToEdit.name_nb || '',
+        name_nb: itemToEdit.name_nb || itemToEdit.name || '',
+        name_en: itemToEdit.name_en || '',
+        description: itemToEdit.description || itemToEdit.description_nb || '',
+        description_nb: itemToEdit.description_nb || itemToEdit.description || '',
+        description_en: itemToEdit.description_en || '',
         sizes: normalizedSizes,
         colors: normalizedColors,
         image_urls: normalizedImageUrls,
-      }
-    });
+        category: itemToEdit.category || '',
+        stock_quantity: itemToEdit.stock_quantity ?? undefined,
+      });
+    }
   }
 
   function handleNew() {

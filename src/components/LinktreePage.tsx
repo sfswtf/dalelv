@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { siteConfig } from '../config/siteConfig';
 import { ExternalLink, ArrowLeft } from 'lucide-react';
 
 interface LinktreeItem {
@@ -42,23 +41,7 @@ export function LinktreePage() {
   return (
     <div className="min-h-screen bg-neutral-900 text-white">
       <div className="max-w-md mx-auto px-4 py-12">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 text-neutral-400 hover:text-white mb-8 transition-colors"
-        >
-          <ArrowLeft size={18} />
-          Tilbake til forsiden
-        </Link>
-
-        <div className="text-center mb-10">
-          <img
-            src={siteConfig.logo.header || siteConfig.logo.primary}
-            alt={siteConfig.name}
-            className="h-20 w-auto mx-auto mb-4"
-            style={{ filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.5))' }}
-          />
-          <h1 className="text-xl font-medium text-neutral-300">{siteConfig.name}</h1>
-        </div>
+        <h1 className="text-center text-xl font-medium text-neutral-300 mb-10">Ka d går i</h1>
 
         {loading ? (
           <div className="space-y-3">
@@ -84,6 +67,14 @@ export function LinktreePage() {
             ))}
           </div>
         )}
+
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-neutral-400 hover:text-white mt-10 transition-colors"
+        >
+          <ArrowLeft size={18} />
+          Tilbake til forsiden
+        </Link>
       </div>
     </div>
   );

@@ -156,22 +156,42 @@ export function PortfolioManager() {
     setImageInput('');
   }
 
-  function handleEdit(project: PortfolioProject) {
-    // Set editing project and form data
-    console.log('Editing portfolio project:', project.id);
+  async function handleEdit(project: PortfolioProject) {
+    if (!project?.id) return;
     setEditingProject(project);
-    setFormData({
-      ...project,
-      // Ensure all fields are set
-      title: project.title || '',
-      description: project.description || '',
-      category: project.category || '',
-      tech_stack: project.tech_stack || [],
-      image_urls: project.image_urls || [],
-      live_url: project.live_url || null,
-      github_url: project.github_url || null,
-      featured: project.featured || false,
-    });
+    try {
+      const { data, error } = await supabase
+        .from('portfolio_projects')
+        .select('*')
+        .eq('id', project.id)
+        .single();
+      if (error) throw error;
+      const row = data as any;
+      setFormData({
+        id: row.id,
+        title: row.title || '',
+        description: row.description || '',
+        category: row.category || '',
+        tech_stack: row.tech_stack || [],
+        image_urls: row.image_urls || [],
+        live_url: row.live_url || null,
+        github_url: row.github_url || null,
+        featured: row.featured || false,
+      });
+    } catch (err) {
+      console.warn('Supabase fetch failed, using list data:', err);
+      setFormData({
+        ...project,
+        title: project.title || '',
+        description: project.description || '',
+        category: project.category || '',
+        tech_stack: project.tech_stack || [],
+        image_urls: project.image_urls || [],
+        live_url: project.live_url || null,
+        github_url: project.github_url || null,
+        featured: project.featured || false,
+      });
+    }
   }
   
   function handleNewProject() {
