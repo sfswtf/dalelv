@@ -6,9 +6,11 @@ interface ParallaxHeroProps {
   children: React.ReactNode;
   imageUrl: string;
   videoUrl?: string;
+  /** When true, video loops as background instead of playing once as intro */
+  loopVideo?: boolean;
 }
 
-export const ParallaxHero: React.FC<ParallaxHeroProps> = ({ children, imageUrl, videoUrl }) => {
+export const ParallaxHero: React.FC<ParallaxHeroProps> = ({ children, imageUrl, videoUrl, loopVideo = false }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const [videoEnded, setVideoEnded] = useState(false);
@@ -32,14 +34,14 @@ export const ParallaxHero: React.FC<ParallaxHeroProps> = ({ children, imageUrl, 
       setVideoPlaying(false);
       setGlobalVideoEnded(false);
       
-      // Set a timeout fallback - if video doesn't load in 5 seconds, show content
+      // Set a timeout fallback - if video doesn't load in 2 seconds, show content with image fallback
       const timeoutId = setTimeout(() => {
         if (!videoEnded && !videoError && !videoPlaying) {
-          console.warn('Video loading timeout, showing content');
+          console.warn('Video loading timeout, showing content with image fallback');
           setVideoError(true);
           showContent();
         }
-      }, 5000);
+      }, 2000);
 
       // Wait for video to be ready to play
       const handleCanPlay = () => {
@@ -47,6 +49,7 @@ export const ParallaxHero: React.FC<ParallaxHeroProps> = ({ children, imageUrl, 
         // Try to play video
         video.play().then(() => {
           setVideoPlaying(true);
+          if (loopVideo) showContent(); // Loop mode: content ready when playing
         }).catch(err => {
           console.error('Error playing video:', err);
           setVideoError(true);
@@ -84,12 +87,12 @@ export const ParallaxHero: React.FC<ParallaxHeroProps> = ({ children, imageUrl, 
         // Image loading will trigger content display
       }
     }
-  }, [videoUrl, setGlobalVideoEnded]);
+  }, [videoUrl, loopVideo, setGlobalVideoEnded]);
 
   const handleVideoEnd = () => {
+    if (loopVideo) return; // Loop mode: video handles its own looping
     // Show image background after video ends
     showContent();
-    // Hide video and show image
     if (videoRef.current) {
       videoRef.current.style.display = 'none';
     }
@@ -102,34 +105,33 @@ export const ParallaxHero: React.FC<ParallaxHeroProps> = ({ children, imageUrl, 
   };
 
   // Determine if content should be visible
-  // Only show content when:
-  // 1. Video is playing and has ended, OR
-  // 2. Video error occurred and image is loaded, OR
-  // 3. No video and image is loaded
-  const shouldShowContent = 
-    (videoUrl && videoPlaying && videoEnded) ||
-    (videoUrl && videoError && imageLoaded) ||
-    (!videoUrl && imageLoaded);
+  const shouldShowContent = loopVideo
+    ? (videoPlaying || videoReady) || videoError || imageLoaded
+    : (videoUrl && videoPlaying && videoEnded) ||
+      (videoUrl && videoError && imageLoaded) ||
+      (!videoUrl && imageLoaded);
 
   return (
-    <div className="fixed top-0 left-0 w-full h-screen z-0 overflow-hidden">
+    <div className="fixed top-0 left-0 w-full h-screen z-0 overflow-hidden bg-neutral-900">
       <div className="absolute inset-0">
         {/* Video background - plays first if videoUrl is provided */}
-        {videoUrl && !videoEnded && !videoError && (
+        {videoUrl && (loopVideo || (!videoEnded && !videoError)) && (
           <video
             ref={videoRef}
-            className="w-full h-full object-contain sm:object-contain md:object-cover"
+            className="w-full h-full object-cover"
             playsInline
             muted
+            loop={loopVideo}
+            autoPlay={loopVideo}
             onEnded={handleVideoEnd}
             onError={handleVideoError}
             preload="auto"
             style={{
-              opacity: videoPlaying ? 1 : 0,
+              opacity: (loopVideo ? videoPlaying || videoReady : videoPlaying) ? 1 : 0,
               transition: 'opacity 0.3s ease-in-out'
             }}
           >
-            <source src={videoUrl} type="video/mp4" />
+            <source src={videoUrl} type={videoUrl.endsWith('.mov') ? 'video/quicktime' : 'video/mp4'} />
           </video>
         )}
         
@@ -146,11 +148,15 @@ export const ParallaxHero: React.FC<ParallaxHeroProps> = ({ children, imageUrl, 
             if (!videoUrl) {
               showContent();
             }
+            // Loop mode: show content as soon as image loads (video can fade in when ready)
+            if (loopVideo) {
+              showContent();
+            }
           }}
           style={{ 
-            opacity: (videoEnded || !videoUrl || videoError) && imageLoaded ? 1 : 0,
+            opacity: ((!loopVideo && (videoEnded || !videoUrl || videoError)) || (loopVideo && videoError)) && imageLoaded ? 1 : 0,
             transition: 'opacity 0.8s ease-in-out',
-            position: videoUrl && !videoEnded && !videoError ? 'absolute' : 'relative'
+            position: (videoUrl && !videoEnded && !videoError) ? 'absolute' : 'relative'
           }}
         />
         {/* No dark overlay - background at full opacity */}

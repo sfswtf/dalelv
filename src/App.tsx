@@ -163,7 +163,8 @@ function HomePage() {
       {/* Hero Section */}
       <ParallaxHero 
         imageUrl="/images/hero-background.jpg"
-        videoUrl="/images/hero-intro.mp4"
+        videoUrl="/images/hero-bgloop.mp4"
+        loopVideo
       >
         {/* Hero overlay: content in upper viewport to avoid overlap when bottom section scrolls */}
         <div className="relative w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-screen flex flex-col justify-start items-center pt-14 sm:pt-16 md:pt-20">
