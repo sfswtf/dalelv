@@ -3,6 +3,7 @@ import { toast } from 'react-hot-toast';
 import { useLanguageStore } from '../../stores/languageStore';
 import { LocalStorageService } from '../../lib/localStorage';
 import { supabase } from '../../lib/supabase';
+import { cleanUrl, cleanUrlWithProtocol } from '../../lib/cleanUrl';
 import { RichTextEditor } from './RichTextEditor';
 import { ImageUploadMultiField } from './ImageUploadMultiField';
 
@@ -87,30 +88,31 @@ export function PortfolioManager() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
-    // Debug: Log current state
-    console.log('Submitting portfolio project:', {
-      editingProject: editingProject?.id,
-      formData,
-      isEditing: !!editingProject?.id,
-    });
-    
+    const imageUrls = Array.isArray(formData.image_urls)
+      ? formData.image_urls.map(u => cleanUrl(u)).filter((u): u is string => !!u)
+      : [];
+    const payload = {
+      title: (formData.title || '').trim(),
+      description: (formData.description || '').trim(),
+      category: (formData.category || '').trim(),
+      tech_stack: (formData.tech_stack || []).filter(t => t && t.trim()).map(t => t.trim()),
+      image_urls: imageUrls,
+      live_url: cleanUrlWithProtocol(formData.live_url),
+      github_url: cleanUrlWithProtocol(formData.github_url),
+      featured: formData.featured ?? false,
+    };
     try {
       if (editingProject?.id) {
-        // Update existing project
-        console.log('Updating portfolio project:', editingProject.id);
         const { error } = await supabase
           .from('portfolio_projects')
-          .update(formData)
+          .update(payload)
           .eq('id', editingProject.id);
         if (error) throw error;
         toast.success('Prosjekt oppdatert');
       } else {
-        // Insert new project
-        console.log('Creating new portfolio project');
         const { error } = await supabase
           .from('portfolio_projects')
-          .insert([formData]);
+          .insert([payload]);
         if (error) throw error;
         toast.success('Prosjekt opprettet');
       }
@@ -122,10 +124,10 @@ export function PortfolioManager() {
       console.warn('Supabase save failed, using localStorage:', error);
       try {
         if (editingProject?.id) {
-          LocalStorageService.update('portfolio_projects', editingProject.id, formData);
+          LocalStorageService.update('portfolio_projects', editingProject.id, { ...formData, ...payload });
           toast.success('Prosjekt oppdatert (lokal lagring)');
         } else {
-          LocalStorageService.add('portfolio_projects', formData);
+          LocalStorageService.add('portfolio_projects', { ...formData, ...payload });
           toast.success('Prosjekt opprettet (lokal lagring)');
         }
         resetForm();
@@ -153,7 +155,6 @@ export function PortfolioManager() {
       featured: false,
     });
     setTechInput('');
-    setImageInput('');
   }
 
   async function handleEdit(project: PortfolioProject) {

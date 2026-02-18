@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { useLanguageStore } from '../../stores/languageStore';
 import { supabase } from '../../lib/supabase';
+import { cleanUrl } from '../../lib/cleanUrl';
 import { RichTextEditor } from './RichTextEditor';
 import { ImageUploadField } from './ImageUploadField';
 import { X, Plus } from 'lucide-react';
@@ -122,19 +123,22 @@ export function ArtistManager() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const otherLinks = Array.isArray(formData.other_links) ? formData.other_links.filter(link => link && link.url) : [];
+    const otherLinks = Array.isArray(formData.other_links)
+      ? formData.other_links
+          .filter(link => link && cleanUrl(link.url))
+          .map(link => ({ label: (link.label || '').trim(), url: cleanUrl(link.url)! }))
+      : [];
     const now = new Date().toISOString();
-    // Payload for Supabase (table has name, bio; app uses name_nb/name_en for i18n)
     const supabasePayload = {
-      name: formData.name_nb || formData.name || '',
-      bio: formData.bio_nb || formData.bio || '',
-      image_url: formData.image_url || null,
-      spotify_url: formData.spotify_url || null,
-      spotify_embed_url: formData.spotify_embed_url || null,
-      website_url: formData.website_url || null,
-      instagram_url: formData.instagram_url || null,
-      facebook_url: formData.facebook_url || null,
-      youtube_url: formData.youtube_url || null,
+      name: (formData.name_nb || formData.name || '').trim(),
+      bio: (formData.bio_nb || formData.bio || '').trim(),
+      image_url: cleanUrl(formData.image_url),
+      spotify_url: cleanUrl(formData.spotify_url),
+      spotify_embed_url: cleanUrl(formData.spotify_embed_url),
+      website_url: cleanUrl(formData.website_url),
+      instagram_url: cleanUrl(formData.instagram_url),
+      facebook_url: cleanUrl(formData.facebook_url),
+      youtube_url: cleanUrl(formData.youtube_url),
       other_links: otherLinks,
       status: formData.status || 'published',
       featured: formData.featured ?? false,
@@ -165,6 +169,8 @@ export function ArtistManager() {
       }
 
       setEditingArtist(null);
+      setLinkLabel('');
+      setLinkUrl('');
       setFormData({
         name: '',
         name_nb: '',
@@ -256,6 +262,8 @@ export function ArtistManager() {
 
   function handleNew() {
     setEditingArtist(null);
+    setLinkLabel('');
+    setLinkUrl('');
     setFormData({
       name: '',
       name_nb: '',

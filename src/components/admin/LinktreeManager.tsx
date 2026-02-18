@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
+import { cleanUrlWithProtocol } from '../../lib/cleanUrl';
 import { Plus, Pencil, Trash2, ExternalLink } from 'lucide-react';
 import { useLanguageStore } from '../../stores/languageStore';
 
@@ -45,14 +46,15 @@ export function LinktreeManager() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!formData.label.trim() || !formData.url.trim()) {
+    const cleanedUrl = cleanUrlWithProtocol(formData.url);
+    if (!formData.label.trim() || !cleanedUrl) {
       toast.error('Fyll ut label og URL');
       return;
     }
 
     const payload = {
       label: formData.label.trim(),
-      url: formData.url.trim(),
+      url: cleanedUrl,
       display_order: formData.display_order,
       status: formData.status,
       updated_at: new Date().toISOString(),
@@ -91,14 +93,32 @@ export function LinktreeManager() {
     }
   }
 
-  function handleEdit(item: LinktreeItem) {
+  async function handleEdit(item: LinktreeItem) {
+    if (!item?.id) return;
     setEditingItem(item);
-    setFormData({
-      label: item.label,
-      url: item.url,
-      display_order: item.display_order,
-      status: item.status,
-    });
+    try {
+      const { data, error } = await supabase
+        .from('linktree_links')
+        .select('*')
+        .eq('id', item.id)
+        .single();
+      if (error) throw error;
+      const row = data as LinktreeItem;
+      setFormData({
+        label: row.label || '',
+        url: row.url || '',
+        display_order: row.display_order ?? 0,
+        status: row.status || 'published',
+      });
+    } catch (err) {
+      console.warn('Fetch failed, using list data:', err);
+      setFormData({
+        label: item.label || '',
+        url: item.url || '',
+        display_order: item.display_order ?? 0,
+        status: item.status || 'published',
+      });
+    }
   }
 
   function handleNew() {

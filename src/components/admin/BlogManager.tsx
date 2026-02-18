@@ -3,6 +3,7 @@ import { toast } from 'react-hot-toast';
 import { useLanguageStore } from '../../stores/languageStore';
 import { LocalStorageService } from '../../lib/localStorage';
 import { supabase } from '../../lib/supabase';
+import { cleanUrlWithProtocol } from '../../lib/cleanUrl';
 import { RichTextEditor } from './RichTextEditor';
 import { ImageUploadField } from './ImageUploadField';
 
@@ -140,14 +141,25 @@ export function BlogManager() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const cleanedAffiliateLinks = (formData.affiliate_links || [])
+      .map(link => ({
+        text: (link.text || '').trim(),
+        url: cleanUrlWithProtocol(link.url),
+        isAffiliate: link.isAffiliate ?? false,
+      }))
+      .filter(link => link.text && link.url);
+    const submitData: BlogPost = {
+      ...formData,
+      title: (formData.title || '').trim(),
+      slug: (formData.slug || generateSlug(formData.title)).trim(),
+      category: (formData.category || '').trim(),
+      featured_image: cleanUrlWithProtocol(formData.featured_image) || null,
+      affiliate_links: cleanedAffiliateLinks,
+      published_at: formData.status === 'published' && !formData.published_at
+        ? new Date().toISOString()
+        : formData.published_at,
+    };
     try {
-      const submitData: BlogPost = {
-        ...formData,
-        slug: formData.slug || generateSlug(formData.title),
-        published_at: formData.status === 'published' && !formData.published_at
-          ? new Date().toISOString()
-          : formData.published_at,
-      };
 
       if (editingPost?.id) {
         // Try Supabase first

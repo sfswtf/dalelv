@@ -3,6 +3,7 @@ import { toast } from 'react-hot-toast';
 import { useLanguageStore } from '../../stores/languageStore';
 import { LocalStorageService } from '../../lib/localStorage';
 import { supabase } from '../../lib/supabase';
+import { cleanUrlWithProtocol } from '../../lib/cleanUrl';
 import { RichTextEditor } from './RichTextEditor';
 import { ImageUploadField } from './ImageUploadField';
 
@@ -71,30 +72,26 @@ export function CourseManager() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
-    // Debug: Log current state
-    console.log('Submitting course:', {
-      editingCourse: editingCourse?.id,
-      formData,
-      isEditing: !!editingCourse?.id,
-    });
-    
+    const payload = {
+      title: (formData.title || '').trim(),
+      description: (formData.description || '').trim(),
+      price: formData.price ?? 0,
+      currency: formData.currency || 'NOK',
+      course_image: cleanUrlWithProtocol(formData.course_image),
+      status: formData.status || 'draft',
+    };
     try {
       if (editingCourse?.id) {
-        // Update existing course
-        console.log('Updating course:', editingCourse.id);
         const { error } = await supabase
           .from('courses')
-          .update(formData)
+          .update(payload)
           .eq('id', editingCourse.id);
         if (error) throw error;
         toast.success('Kurs oppdatert');
       } else {
-        // Insert new course
-        console.log('Creating new course');
         const { error } = await supabase
           .from('courses')
-          .insert([formData]);
+          .insert([payload]);
         if (error) throw error;
         toast.success('Kurs opprettet');
       }
@@ -106,10 +103,10 @@ export function CourseManager() {
       console.warn('Supabase save failed, using localStorage:', error);
       try {
         if (editingCourse?.id) {
-          LocalStorageService.update('courses', editingCourse.id, formData);
+          LocalStorageService.update('courses', editingCourse.id, { ...formData, ...payload });
           toast.success('Kurs oppdatert (lokal lagring)');
         } else {
-          LocalStorageService.add('courses', formData);
+          LocalStorageService.add('courses', { ...formData, ...payload });
           toast.success('Kurs opprettet (lokal lagring)');
         }
         resetForm();

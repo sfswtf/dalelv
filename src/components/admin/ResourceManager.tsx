@@ -3,6 +3,7 @@ import { toast } from 'react-hot-toast';
 import { useLanguageStore } from '../../stores/languageStore';
 import { LocalStorageService } from '../../lib/localStorage';
 import { supabase } from '../../lib/supabase';
+import { cleanUrlWithProtocol } from '../../lib/cleanUrl';
 import { RichTextEditor } from './RichTextEditor';
 
 interface Resource {
@@ -69,30 +70,26 @@ export function ResourceManager() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
-    // Debug: Log current state
-    console.log('Submitting resource:', {
-      editingResource: editingResource?.id,
-      formData,
-      isEditing: !!editingResource?.id,
-    });
-    
+    const payload = {
+      name: (formData.name || '').trim(),
+      description: (formData.description || '').trim(),
+      category: (formData.category || '').trim(),
+      affiliate_url: cleanUrlWithProtocol(formData.affiliate_url),
+      rating: formData.rating ?? 5,
+      worth_it: formData.worth_it ?? true,
+    };
     try {
       if (editingResource?.id) {
-        // Update existing resource
-        console.log('Updating resource:', editingResource.id);
         const { error } = await supabase
           .from('tools_resources')
-          .update(formData)
+          .update(payload)
           .eq('id', editingResource.id);
         if (error) throw error;
         toast.success('Ressurs oppdatert');
       } else {
-        // Insert new resource
-        console.log('Creating new resource');
         const { error } = await supabase
           .from('tools_resources')
-          .insert([formData]);
+          .insert([payload]);
         if (error) throw error;
         toast.success('Ressurs opprettet');
       }
@@ -104,10 +101,10 @@ export function ResourceManager() {
       console.warn('Supabase save failed, using localStorage:', error);
       try {
         if (editingResource?.id) {
-          LocalStorageService.update('tools_resources', editingResource.id, formData);
+          LocalStorageService.update('tools_resources', editingResource.id, { ...formData, ...payload });
           toast.success('Ressurs oppdatert (lokal lagring)');
         } else {
-          LocalStorageService.add('tools_resources', formData);
+          LocalStorageService.add('tools_resources', { ...formData, ...payload });
           toast.success('Ressurs opprettet (lokal lagring)');
         }
         resetForm();
@@ -134,20 +131,38 @@ export function ResourceManager() {
     });
   }
 
-  function handleEdit(resource: Resource) {
-    // Set editing resource and form data
-    console.log('Editing resource:', resource.id);
+  async function handleEdit(resource: Resource) {
+    if (!resource?.id) return;
     setEditingResource(resource);
-    setFormData({
-      ...resource,
-      // Ensure all fields are set
-      name: resource.name || '',
-      description: resource.description || '',
-      category: resource.category || '',
-      affiliate_url: resource.affiliate_url || null,
-      rating: resource.rating || 5,
-      worth_it: resource.worth_it !== undefined ? resource.worth_it : true,
-    });
+    try {
+      const { data, error } = await supabase
+        .from('tools_resources')
+        .select('*')
+        .eq('id', resource.id)
+        .single();
+      if (error) throw error;
+      const row = data as Resource;
+      setFormData({
+        id: row.id,
+        name: row.name || '',
+        description: row.description || '',
+        category: row.category || '',
+        affiliate_url: row.affiliate_url || null,
+        rating: row.rating ?? 5,
+        worth_it: row.worth_it ?? true,
+      });
+    } catch (err) {
+      console.warn('Supabase fetch failed, using list data:', err);
+      setFormData({
+        ...resource,
+        name: resource.name || '',
+        description: resource.description || '',
+        category: resource.category || '',
+        affiliate_url: resource.affiliate_url || null,
+        rating: resource.rating ?? 5,
+        worth_it: resource.worth_it ?? true,
+      });
+    }
   }
   
   function handleNewResource() {

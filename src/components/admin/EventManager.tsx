@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
+import { cleanUrlWithProtocol } from '../../lib/cleanUrl';
 import { ImageUploadField } from './ImageUploadField';
 
 type Artist = {
@@ -142,21 +143,40 @@ export function EventManager() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const payload = {
+      ...formData,
+      title: (formData.title_nb || formData.title || '').trim(),
+      title_nb: (formData.title_nb || '').trim(),
+      title_en: (formData.title_en || '').trim(),
+      description: (formData.description_nb || formData.description || '').trim(),
+      description_nb: (formData.description_nb || '').trim(),
+      description_en: (formData.description_en || '').trim(),
+      image_url: cleanUrlWithProtocol(formData.image_url),
+      tickets_url: cleanUrlWithProtocol(formData.tickets_url),
+      location: (formData.location || '').trim() || null,
+      venue_name: (formData.venue_name || '').trim() || null,
+      venue_address: (formData.venue_address || '').trim() || null,
+      venue_city: (formData.venue_city || '').trim() || null,
+      tour_name: (formData.tour_name || '').trim() || null,
+      promoter: (formData.promoter || '').trim() || null,
+      production_notes: (formData.production_notes || '').trim() || null,
+    };
     try {
       let eventId: string;
       
       if (editingEvent?.id) {
         const { error } = await supabase
           .from('events')
-          .update(formData)
+          .update(payload)
           .eq('id', editingEvent.id);
         if (error) throw error;
         eventId = editingEvent.id;
         toast.success('Arrangement oppdatert');
       } else {
+        const { id: _omit, ...insertPayload } = payload as any;
         const { data, error } = await supabase
           .from('events')
-          .insert([formData as Event])
+          .insert([insertPayload])
           .select()
           .single();
         if (error) throw error;
@@ -711,7 +731,11 @@ export function EventManager() {
                   setSelectedArtists([]);
                   setFormData({
                     title: '',
+                    title_nb: '',
+                    title_en: '',
                     description: '',
+                    description_nb: '',
+                    description_en: '',
                     event_date: '',
                     location: '',
                     status: 'draft',

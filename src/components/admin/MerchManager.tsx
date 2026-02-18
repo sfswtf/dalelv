@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useLanguageStore } from '../../stores/languageStore';
 import { supabase } from '../../lib/supabase';
+import { cleanUrl } from '../../lib/cleanUrl';
 import { RichTextEditor } from './RichTextEditor';
 import { ImageUploadMultiField } from './ImageUploadMultiField';
 import { X, Plus } from 'lucide-react';
@@ -113,13 +114,15 @@ export function MerchManager() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const imageUrls = Array.isArray(formData.image_urls) ? formData.image_urls.filter(url => url && url.trim()) : [];
+    const imageUrls = Array.isArray(formData.image_urls)
+      ? formData.image_urls.map(u => cleanUrl(u)).filter((u): u is string => !!u)
+      : [];
     const sizes = Array.isArray(formData.sizes) ? formData.sizes.filter(size => size && size.trim()) : [];
     const colors = Array.isArray(formData.colors) ? formData.colors.filter(color => color && color.trim()) : [];
     const now = new Date().toISOString();
     const supabasePayload = {
-      name: formData.name_nb || formData.name || '',
-      description: formData.description_nb || formData.description || '',
+      name: (formData.name_nb || formData.name || '').trim(),
+      description: (formData.description_nb || formData.description || '').trim(),
       price: Number(formData.price) || 0,
       currency: formData.currency || 'NOK',
       image_urls: imageUrls,
