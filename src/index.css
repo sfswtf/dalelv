@@ -32,6 +32,11 @@
   }
 }
 
+@keyframes logo-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.5; }
+}
+
 @layer components {
   .article-content {
     @apply text-neutral-700;

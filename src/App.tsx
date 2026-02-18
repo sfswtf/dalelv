@@ -176,6 +176,7 @@ function HomePage() {
               className="w-auto max-w-[95vw] h-[44vh] min-h-[200px] max-h-[520px] sm:h-[52vh] sm:max-h-[640px] md:h-[60vh] md:max-h-[760px] object-contain flex-shrink-0"
               style={{
                 filter: 'drop-shadow(0 0 16px rgba(0, 0, 0, 0.5))',
+                animation: 'logo-pulse 3s ease-in-out infinite',
               }}
               loading="eager"
             />
@@ -188,6 +189,7 @@ function HomePage() {
                 style={{
                   mixBlendMode: 'normal',
                   filter: 'drop-shadow(0 0 8px rgba(0, 0, 0, 0.3))',
+                  animation: 'logo-pulse 3s ease-in-out infinite',
                 }}
                 loading="eager"
                 onError={(e) => {

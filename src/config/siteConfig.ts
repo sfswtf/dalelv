@@ -56,7 +56,7 @@ export const siteConfig: SiteConfig = {
   name: import.meta.env.VITE_SITE_NAME || 'Dalelv Records',
   shortName: import.meta.env.VITE_SITE_SHORT_NAME || 'Dalelv',
   description: import.meta.env.VITE_SITE_DESCRIPTION || 'Website description',
-  url: import.meta.env.VITE_SITE_URL || 'https://example.com',
+  url: import.meta.env.VITE_SITE_URL || 'https://dalelvrecords.no',
   
   email: import.meta.env.VITE_CONTACT_EMAIL || 'post.marconilsen@gmail.com',
   adminEmail: import.meta.env.VITE_ADMIN_EMAIL || 'admin@example.com',

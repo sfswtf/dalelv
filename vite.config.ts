@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [
     react(),
     sitemap({
-      hostname: process.env.VITE_SITE_URL || 'https://example.com',
+      hostname: process.env.VITE_SITE_URL || 'https://dalelvrecords.no',
       dynamicRoutes: [
         '/portfolio',
         '/blog',
