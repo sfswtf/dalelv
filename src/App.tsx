@@ -166,7 +166,7 @@ function HomePage() {
         videoUrl="/images/hero-bgloop.mp4"
         loopVideo
       >
-        {/* Hero overlay: content in upper viewport to avoid overlap when bottom section scrolls */}
+        {/* Hero overlay: content in upper viewport */}
         <div className="relative w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-screen flex flex-col justify-start items-center pt-14 sm:pt-16 md:pt-20">
           <div className="text-center w-full flex flex-col items-center gap-2 sm:gap-3 max-h-[85vh]">
             {/* Logo - 2x size */}
@@ -175,8 +175,8 @@ function HomePage() {
               alt={`${siteConfig.name} logo symbol`}
               className="w-auto max-w-[95vw] h-[44vh] min-h-[200px] max-h-[520px] sm:h-[52vh] sm:max-h-[640px] md:h-[60vh] md:max-h-[760px] object-contain flex-shrink-0"
               style={{
-                filter: 'drop-shadow(0 0 16px rgba(0, 0, 0, 0.5))',
-                animation: 'logo-pulse 3s ease-in-out infinite',
+                filter: 'drop-shadow(0 0 6px rgba(255,77,0,0.7)) drop-shadow(0 0 16px rgba(255,77,0,0.5)) drop-shadow(0 0 28px rgba(255,77,0,0.3)) drop-shadow(0 6px 20px rgba(255,77,0,0.25))',
+                animation: 'logo-pulse 5s ease-in-out infinite',
               }}
               loading="eager"
             />
@@ -188,8 +188,8 @@ function HomePage() {
                 className="h-[10rem] sm:h-[12rem] md:h-[14rem] w-auto max-w-[90vw] object-contain flex-shrink-0"
                 style={{
                   mixBlendMode: 'normal',
-                  filter: 'drop-shadow(0 0 8px rgba(0, 0, 0, 0.3))',
-                  animation: 'logo-pulse 3s ease-in-out infinite',
+                  filter: 'drop-shadow(0 0 4px rgba(255,77,0,0.6)) drop-shadow(0 0 12px rgba(255,77,0,0.4)) drop-shadow(0 4px 14px rgba(255,77,0,0.2))',
+                  animation: 'logo-pulse 5s ease-in-out infinite',
                 }}
                 loading="eager"
                 onError={(e) => {
@@ -197,13 +197,15 @@ function HomePage() {
                 }}
               />
             )}
-            
-            {/* LETS GO – links to linktree */}
-            <div className="flex justify-center w-full px-2 flex-shrink-0 mt-2 sm:mt-3">
-              <Link to="/linktree" className="w-full sm:w-auto block">
+          </div>
+
+          {/* TICKETS – first layer, lower on page, absolute so always visible on top */}
+          <div className="absolute left-0 right-0 top-[70vh] z-20 flex justify-center px-4 py-12 pointer-events-none overflow-visible">
+            <div className="pointer-events-auto overflow-visible p-8">
+              <Link to="/linktree">
                 <AnimatedButton
                   variant="primary"
-                  className="w-full sm:min-w-[280px] rounded-xl px-14 md:px-20 py-5 md:py-6 text-xl md:text-2xl font-bold bg-[#FF4D00] text-white hover:bg-[#e64400] active:bg-[#cc3a00] transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-100"
+                  className="tickets-hero-btn min-w-[280px] rounded-xl px-14 md:px-20 py-5 md:py-6 text-xl md:text-2xl font-bold bg-[#FF4D00] text-white hover:bg-[#e64400] active:bg-[#cc3a00] transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-100 overflow-visible"
                 >
                   TICKETS
                 </AnimatedButton>

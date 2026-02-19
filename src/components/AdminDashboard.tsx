@@ -166,6 +166,36 @@ export function AdminDashboard() {
               {t('admin.artists')}
             </button>
             <button
+              onClick={() => setActiveTab('events')}
+              className={`whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm ${
+                activeTab === 'events'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              {t('admin.events')}
+            </button>
+            <button
+              onClick={() => setActiveTab('linktree')}
+              className={`whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm ${
+                activeTab === 'linktree'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Linktree
+            </button>
+            <button
+              onClick={() => setActiveTab('messages')}
+              className={`whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm ${
+                activeTab === 'messages'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              {t('admin.messages')}
+            </button>
+            <button
               onClick={() => setActiveTab('merch')}
               className={`whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm ${
                 activeTab === 'merch'
@@ -184,36 +214,6 @@ export function AdminDashboard() {
               }`}
             >
               {t('admin.orders')}
-            </button>
-            <button
-              onClick={() => setActiveTab('events')}
-              className={`whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm ${
-                activeTab === 'events'
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              {t('admin.events')}
-            </button>
-            <button
-              onClick={() => setActiveTab('messages')}
-              className={`whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm ${
-                activeTab === 'messages'
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              {t('admin.messages')}
-            </button>
-            <button
-              onClick={() => setActiveTab('linktree')}
-              className={`whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm ${
-                activeTab === 'linktree'
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Linktree
             </button>
           </nav>
         </div>

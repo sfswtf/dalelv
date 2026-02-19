@@ -228,14 +228,14 @@ const translations: Record<Language, Record<string, string>> = {
     'about.para3': 'Tilnærmingen min til AI-utdanning fokuserer på "vibe coding" - en praktisk, hands-on metodikk som legger vekt på eksperimentering og virkelig anvendelse fremfor teori. Bli med i fellesskapet for å koble til, lære og utforske det revolusjonerende potensialet til AI sammen.',
     
     // Artists
-    'artists.title': 'Artister',
-    'artists.description': 'Utforsk våre artister og deres musikk.',
-    'artists.comingSoon': 'Artister kommer snart.',
+    'artists.title': 'Artista',
+    'artists.description': 'Utforsk Artista og deres musikk.',
+    'artists.comingSoon': 'Artista kommer snart.',
     'artists.featured': 'Utvalgt',
     'artists.listenOnSpotify': 'Lytt på Spotify',
     'artists.notFound': 'Artist ikke funnet',
     'artists.notFoundDesc': 'Artisten du leter etter finnes ikke.',
-    'artists.backToArtists': 'Tilbake til artister',
+    'artists.backToArtists': 'Tilbake til Artista',
     
     // Merch
     'merch.title': 'Merch',
@@ -260,7 +260,7 @@ const translations: Record<Language, Record<string, string>> = {
     'admin.members': 'Medlemmer',
     'admin.social': 'Sosiale medier',
     'admin.content': 'Innhold',
-    'admin.artists': 'Artister',
+    'admin.artists': 'Artista',
     'admin.merch': 'Merch',
     'admin.orders': 'Bestillinger',
   },
@@ -514,7 +514,7 @@ const translations: Record<Language, Record<string, string>> = {
     'admin.members': 'Members',
     'admin.social': 'Social Media',
     'admin.content': 'Content',
-    'admin.artists': 'Artists',
+    'admin.artists': 'Artista',
     'admin.merch': 'Merch',
     'admin.orders': 'Orders',
   },

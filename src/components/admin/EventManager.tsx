@@ -55,6 +55,7 @@ export function EventManager() {
   const [loading, setLoading] = useState(true);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const [activeTab, setActiveTab] = useState<'norsk' | 'engelsk'>('norsk');
   const [formData, setFormData] = useState<Partial<Event>>({
     title: '',
     title_nb: '',
@@ -143,12 +144,22 @@ export function EventManager() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const hasTitle = (formData.title_nb || '').trim() || (formData.title_en || '').trim();
+    const hasDesc = (formData.description_nb || '').trim() || (formData.description_en || '').trim();
+    if (!hasTitle) {
+      toast.error(activeTab === 'norsk' ? 'Tittel må fylles ut' : 'Title must be filled in (Norsk or English tab)');
+      return;
+    }
+    if (!hasDesc) {
+      toast.error(activeTab === 'norsk' ? 'Beskrivelse må fylles ut' : 'Description must be filled in (Norsk or English tab)');
+      return;
+    }
     const payload = {
       ...formData,
-      title: (formData.title_nb || formData.title || '').trim(),
+      title: (formData.title_nb || formData.title_en || formData.title || '').trim(),
       title_nb: (formData.title_nb || '').trim(),
       title_en: (formData.title_en || '').trim(),
-      description: (formData.description_nb || formData.description || '').trim(),
+      description: (formData.description_nb || formData.description_en || formData.description || '').trim(),
       description_nb: (formData.description_nb || '').trim(),
       description_en: (formData.description_en || '').trim(),
       image_url: cleanUrlWithProtocol(formData.image_url),
@@ -367,7 +378,7 @@ export function EventManager() {
 
   function addArtist() {
     if (artists.length === 0) {
-      toast.error('Ingen artister tilgjengelig');
+      toast.error('Ingen Artista tilgjengelig');
       return;
     }
     const firstArtist = artists[0];
@@ -406,67 +417,81 @@ export function EventManager() {
             <div className="flex gap-4">
               <button
                 type="button"
-                onClick={() => {}}
-                className="px-4 py-2 font-medium text-sm border-b-2 border-blue-600 text-blue-600"
+                onClick={() => setActiveTab('norsk')}
+                className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+                  activeTab === 'norsk'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
               >
                 Norsk
               </button>
               <button
                 type="button"
-                onClick={() => {}}
-                className="px-4 py-2 font-medium text-sm text-gray-500 hover:text-gray-700"
+                onClick={() => setActiveTab('engelsk')}
+                className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+                  activeTab === 'engelsk'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
               >
                 English
               </button>
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Tittel (Norsk) *</label>
-            <input
-              type="text"
-              required
-              value={formData.title_nb || ''}
-              onChange={e => setFormData({ ...formData, title_nb: e.target.value, title: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1d4f4d] focus:ring-[#1d4f4d]"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Tittel (English)</label>
-            <input
-              type="text"
-              value={formData.title_en || ''}
-              onChange={e => setFormData({ ...formData, title_en: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1d4f4d] focus:ring-[#1d4f4d]"
-              placeholder="Leave empty to use Norwegian version"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Beskrivelse (Norsk) *</label>
-            <textarea
-              required
-              value={formData.description_nb || ''}
-              onChange={e => setFormData({ ...formData, description_nb: e.target.value, description: e.target.value })}
-              rows={4}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1d4f4d] focus:ring-[#1d4f4d]"
-            />
-          </div>
+          {activeTab === 'norsk' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Tittel *</label>
+                <input
+                  type="text"
+                  value={formData.title_nb || ''}
+                  onChange={e => setFormData({ ...formData, title_nb: e.target.value, title: e.target.value })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1d4f4d] focus:ring-[#1d4f4d]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Beskrivelse *</label>
+                <textarea
+                  value={formData.description_nb || ''}
+                  onChange={e => setFormData({ ...formData, description_nb: e.target.value, description: e.target.value })}
+                  rows={4}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1d4f4d] focus:ring-[#1d4f4d]"
+                />
+              </div>
+            </>
+          )}
+
+          {activeTab === 'engelsk' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Title</label>
+                <input
+                  type="text"
+                  value={formData.title_en || ''}
+                  onChange={e => setFormData({ ...formData, title_en: e.target.value })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1d4f4d] focus:ring-[#1d4f4d]"
+                  placeholder="Leave empty to use Norwegian version"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <textarea
+                  value={formData.description_en || ''}
+                  onChange={e => setFormData({ ...formData, description_en: e.target.value })}
+                  rows={4}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1d4f4d] focus:ring-[#1d4f4d]"
+                  placeholder="Leave empty to use Norwegian version"
+                />
+              </div>
+            </>
+          )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Beskrivelse (English)</label>
-            <textarea
-              value={formData.description_en || ''}
-              onChange={e => setFormData({ ...formData, description_en: e.target.value })}
-              rows={4}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1d4f4d] focus:ring-[#1d4f4d]"
-              placeholder="Leave empty to use Norwegian version"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Dato og Tid</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {activeTab === 'norsk' ? 'Dato og Tid' : 'Date and Time'}
+            </label>
             <input
               type="datetime-local"
               required
@@ -504,44 +529,52 @@ export function EventManager() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Arrangementstype</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {activeTab === 'norsk' ? 'Arrangementstype' : 'Event type'}
+            </label>
             <select
               value={formData.event_type || 'concert'}
               onChange={e => setFormData({ ...formData, event_type: e.target.value as Event['event_type'] })}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1d4f4d] focus:ring-[#1d4f4d]"
             >
-              <option value="concert">Konsert</option>
+              <option value="concert">{activeTab === 'norsk' ? 'Konsert' : 'Concert'}</option>
               <option value="tour">Tour</option>
               <option value="festival">Festival</option>
-              <option value="other">Annet</option>
+              <option value="other">{activeTab === 'norsk' ? 'Annet' : 'Other'}</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Tour-navn (hvis del av tour)</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {activeTab === 'norsk' ? 'Tour-navn (hvis del av tour)' : 'Tour name (if part of tour)'}
+            </label>
             <input
               type="text"
               value={formData.tour_name || ''}
               onChange={e => setFormData({ ...formData, tour_name: e.target.value })}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1d4f4d] focus:ring-[#1d4f4d]"
-              placeholder="Eks: Vintertour 2025"
+              placeholder={activeTab === 'norsk' ? 'Eks: Vintertour 2025' : 'E.g. Winter tour 2025'}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Sted / Lokasjon</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {activeTab === 'norsk' ? 'Sted / Lokasjon' : 'Location'}
+            </label>
             <input
               type="text"
               value={formData.location || ''}
               onChange={e => setFormData({ ...formData, location: e.target.value })}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1d4f4d] focus:ring-[#1d4f4d]"
-              placeholder="Eks: Oslo Konserthus"
+              placeholder={activeTab === 'norsk' ? 'Eks: Oslo Konserthus' : 'E.g. Oslo Concert Hall'}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Venue-navn</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {activeTab === 'norsk' ? 'Venue-navn' : 'Venue name'}
+              </label>
               <input
                 type="text"
                 value={formData.venue_name || ''}
@@ -550,7 +583,9 @@ export function EventManager() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">By</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {activeTab === 'norsk' ? 'By' : 'City'}
+              </label>
               <input
                 type="text"
                 value={formData.venue_city || ''}
@@ -561,7 +596,9 @@ export function EventManager() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Venue-adresse</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {activeTab === 'norsk' ? 'Venue-adresse' : 'Venue address'}
+            </label>
             <input
               type="text"
               value={formData.venue_address || ''}
@@ -572,7 +609,9 @@ export function EventManager() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Kapasitet</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {activeTab === 'norsk' ? 'Kapasitet' : 'Capacity'}
+              </label>
               <input
                 type="number"
                 value={formData.capacity || ''}
@@ -581,7 +620,9 @@ export function EventManager() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Dører åpner</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {activeTab === 'norsk' ? 'Dører åpner' : 'Doors open'}
+              </label>
               <input
                 type="datetime-local"
                 value={formData.doors_open ? (() => {
@@ -612,7 +653,9 @@ export function EventManager() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Promoter / Arrangør</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {activeTab === 'norsk' ? 'Promoter / Arrangør' : 'Promoter'}
+            </label>
             <input
               type="text"
               value={formData.promoter || ''}
@@ -622,14 +665,16 @@ export function EventManager() {
           </div>
 
           <ImageUploadField
-            label="Bilde"
+            label={activeTab === 'norsk' ? 'Bilde' : 'Image'}
             value={formData.image_url || ''}
             onChange={(url) => setFormData({ ...formData, image_url: url })}
             folder="events"
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Billettpris (NOK)</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {activeTab === 'norsk' ? 'Billettpris (NOK)' : 'Ticket price (NOK)'}
+            </label>
             <input
               type="number"
               value={formData.ticket_price || ''}
@@ -640,7 +685,9 @@ export function EventManager() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Billettlink</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {activeTab === 'norsk' ? 'Billettlink' : 'Ticket link'}
+            </label>
             <input
               type="url"
               value={formData.tickets_url || ''}
@@ -651,7 +698,9 @@ export function EventManager() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Artister</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {activeTab === 'norsk' ? 'Artista' : 'Artists'}
+            </label>
             <div className="space-y-2">
               {selectedArtists.map((artist, index) => (
                 <div key={index} className="flex gap-2 items-center p-2 border rounded">
@@ -677,13 +726,13 @@ export function EventManager() {
                       onChange={e => updateArtist(index, 'is_headliner', e.target.checked)}
                       className="rounded border-gray-300"
                     />
-                    Hovedartist
+                    {activeTab === 'norsk' ? 'Hovedartist' : 'Headliner'}
                   </label>
                   <input
                     type="number"
                     value={artist.performance_order}
                     onChange={e => updateArtist(index, 'performance_order', Number(e.target.value))}
-                    placeholder="Rekkefølge"
+                    placeholder={activeTab === 'norsk' ? 'Rekkefølge' : 'Order'}
                     className="w-20 rounded-md border-gray-300 shadow-sm focus:border-[#1d4f4d] focus:ring-[#1d4f4d]"
                   />
                   <button
@@ -700,19 +749,21 @@ export function EventManager() {
                 onClick={addArtist}
                 className="text-sm text-blue-600 hover:text-blue-800"
               >
-                + Legg til artist
+                + {activeTab === 'norsk' ? 'Legg til artist' : 'Add artist'}
               </button>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Produksjonsnotater</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {activeTab === 'norsk' ? 'Produksjonsnotater' : 'Production notes'}
+            </label>
             <textarea
               value={formData.production_notes || ''}
               onChange={e => setFormData({ ...formData, production_notes: e.target.value })}
               rows={3}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1d4f4d] focus:ring-[#1d4f4d]"
-              placeholder="Interne notater om produksjon, teknikere, etc."
+              placeholder={activeTab === 'norsk' ? 'Interne notater om produksjon, teknikere, etc.' : 'Internal notes about production, technicians, etc.'}
             />
           </div>
 
@@ -729,6 +780,7 @@ export function EventManager() {
                 onClick={() => {
                   setEditingEvent(null);
                   setSelectedArtists([]);
+                  setActiveTab('norsk');
                   setFormData({
                     title: '',
                     title_nb: '',
@@ -786,7 +838,7 @@ export function EventManager() {
                 )}
                 {event.artists && event.artists.length > 0 && (
                   <p className="text-sm text-gray-600 mt-1">
-                    Artister: {event.artists.map(a => a.artist_name).join(', ')}
+                    Artista: {event.artists.map(a => a.artist_name).join(', ')}
                   </p>
                 )}
                 {event.image_url && (

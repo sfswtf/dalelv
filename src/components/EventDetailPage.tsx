@@ -259,7 +259,7 @@ export function EventDetailPage() {
             <div className="space-y-4">
               {sortedArtists.length > 0 && (
                 <div>
-                  <p className="text-sm text-neutral-500 mb-2">Artister</p>
+                  <p className="text-sm text-neutral-500 mb-2">Artista</p>
                   <div className="space-y-2">
                     {sortedArtists.map((ea) => (
                       <div key={ea.id} className="flex items-center gap-2">

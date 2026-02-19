@@ -98,7 +98,7 @@ export function ArtistManager() {
     } catch (error) {
       console.error('Supabase fetch failed:', error);
       setArtists([]);
-      toast.error('Kunne ikke hente artister fra Supabase');
+      toast.error('Kunne ikke hente Artista fra Supabase');
     } finally {
       setLoading(false);
     }
