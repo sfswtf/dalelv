@@ -113,7 +113,7 @@ export function Navigation() {
 
             <Link
               to="/contact"
-              className={`rounded-lg px-4 py-2 text-sm font-medium whitespace-nowrap transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#FF4D00] focus:ring-offset-2 focus:ring-offset-transparent ${
+              className={`tickets-hero-btn rounded-lg px-4 py-2 text-sm font-medium whitespace-nowrap transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#FF4D00] focus:ring-offset-2 focus:ring-offset-transparent inline-block ${
                 isActive('/contact')
                   ? 'bg-[#FF4D00] text-white shadow-lg'
                   : 'bg-[#FF4D00] text-white hover:bg-[#e64400] hover:shadow-lg hover:scale-105 active:scale-100'
@@ -197,7 +197,7 @@ export function Navigation() {
             <Link
               to="/contact"
               onClick={() => setIsOpen(false)}
-              className={`block py-4 px-4 rounded-lg mt-2 text-lg transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand-400 ${
+              className={`tickets-hero-btn block py-4 px-4 rounded-lg mt-2 text-lg transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#FF4D00] ${
                 isActive('/contact')
                   ? 'bg-[#FF4D00] text-white font-medium'
                   : 'bg-[#FF4D00] text-white hover:bg-[#e64400]'

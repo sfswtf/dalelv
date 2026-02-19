@@ -125,7 +125,7 @@ export function ArtistsPage() {
               to={`/artists/${artist.id}`}
               className="group"
             >
-              <AnimatedCard className="h-full transition-transform hover:scale-105">
+              <AnimatedCard className="artist-card-glow h-full transition-transform hover:scale-105">
                 {artist.image_url && (
                   <div className="w-full h-96 bg-neutral-200 rounded-t-lg overflow-hidden mb-6">
                     <img

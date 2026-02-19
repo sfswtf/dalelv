@@ -143,6 +143,19 @@
   animation: tickets-flour-burst-inner 0.5s cubic-bezier(0.25, 1.5, 0.5, 1) 0.05s forwards;
 }
 
+/* Artist cards: glowing border */
+.artist-card-glow {
+  transition: box-shadow 0.4s ease, transform 0.3s ease;
+}
+
+.artist-card-glow:hover {
+  box-shadow:
+    0 0 0 1px rgba(255, 77, 0, 0.3),
+    0 0 20px rgba(255, 77, 0, 0.4),
+    0 0 40px rgba(255, 77, 0, 0.2),
+    0 0 60px rgba(255, 77, 0, 0.1) !important;
+}
+
 @layer components {
   .article-content {
     @apply text-neutral-700;
